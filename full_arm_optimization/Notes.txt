@@ -1,0 +1,4 @@
+To Do: Finish off dynamic 
+
+
+1. Just looking to an dynamic task to optimize (e.g with contacts)
