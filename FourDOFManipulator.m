@@ -40,15 +40,15 @@ a     = phi([2 4 6 8]);
 % Transform the coordinates
 % Conversion to the coordinate system.
 % --------------------------------------------------------------
-for i = 1 : robot.NDOFs
-    T   = obj.getTransform([0 0 0 0 0 0 0],i,i+1);
-    p   = T(1:3, end);  
-    R   = T(1:3,1:3);
-    robot.mC(:,i) = R'*(robot.mC(:,i) - p);
-end
-
-robot.mC(:,2) = robot.mC(:,2) + [0 0 0.2045]';
-% ---------------------------------------------------------------
+% for i = 1 : robot.NDOFs
+%     T   = obj.getTransform([0 0 0 0 0 0 0],i,i+1);
+%     p   = T(1:3, end);  
+%     R   = T(1:3,1:3);
+%     robot.mC(:,i) = R'*(robot.mC(:,i) - p);
+% end
+% 
+% robot.mC(:,2) = robot.mC(:,2) + [0 0 0.2045]';
+% % ---------------------------------------------------------------
 
 L1 = Link('d', d(1), 'a', a(1), 'alpha', alpha(1));        
 L2 = Link('d', d(2), 'a', a(2), 'alpha', alpha(2),'offset',0);

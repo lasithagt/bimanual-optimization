@@ -1,0 +1,4 @@
+1. simuated annealing
+2. resample data to lower frequency
+3. run the optimization on the hand written letters
+4. 

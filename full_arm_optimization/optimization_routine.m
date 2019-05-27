@@ -53,7 +53,6 @@ t_init = [0.5;0.5;0.5;0.5];
 lq = [theta(:)', optim_a];
 J  = J_(lq);
 v  = pinv(J(1:2,1:4)')*t_init;
-
 % x  = [lq v'];
 
 %% Get the partials from implicit constraints
@@ -90,8 +89,10 @@ x      = [lq';v];
 % Run this infinity loop. To be on the manifold.
 
 while (1)
-    [fk_u,fk_uu]  = FK_u(x(1:8));
-%     [M_u,  M_uu]  = M_u(x(1:8));
+    
+    % Take the partials with respect to pose
+    [fk_u, fk_uu]  = FK_u(x(1:8));
+    %     [M_u,  M_uu]  = M_u(x(1:8));
     [M,g] = manip_grad(x(1:8),x(9:end));
     A   = [fk_u zeros(7,2);g];
 
@@ -101,22 +102,43 @@ while (1)
     % Quadratic Programming Problem
     [dx, fval] = quadprog(H, f, Aeq, beq, A, b);
     x  = x + dx;
-    A*dx;
-    x(9:end)'*M*x(9:end)
+    A * dx;
+    x(9:end)' * M * x(9:end)
     c  = cost_function(x, input);
     
     if (c > thresh)
         break;
     end
     clf(gcf)
+    
+    % Display the current manipulator.
+    l = 0.05;
+    T_base_1 = SE3.Ry(pi/2);
+    T_base_2 = SE3.Ry(-pi/2)*SE3.Rz(-pi);
+    T_base_1.t = [l;-0.6;0];
+    T_base_2.t = [-l;-0.6;0];
+
     L1 = Link('d', 0, 'a', x(5), 'alpha', 0);        
     L2 = Link('d', 0, 'a', x(6), 'alpha', 0);
     L3 = Link('d', 0, 'a', x(7), 'alpha', 0);
     L4 = Link('d', 0, 'a', x(8), 'alpha', 0);
+    L5 = Link('d', 0, 'a', 0, 'alpha', 0);
+    L6 = Link('d', 0, 'a', 0, 'alpha', 0);
+    L7 = Link('d', 0, 'a', 0, 'alpha', 0);
     
-    optim_arm = SerialLink([L1 L2 L3 L4], 'name', 'Single Manipulator');
+    optim_arm_L = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'arm_L');
+    optim_arm_R = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'arm_R');
+
+    
     optim_arm.fellipse(x(1:4)','2d')
     optim_arm.plot(x(1:4)','workspace', 4*[-0.3 1.5 -1 1 -1 1.5], 'noshadow','noarrow', 'view',[-90 90], 'tile1color',[0.9 0.9 0.9],'delay',0.01);
+    
+    for i = 1:size(q,1)
+        optim_arm_L.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[0 60],'tile1color',[10 1 1],'delay',0.0001)
+        hold on
+        q(i,1) = -q(i,1); q(i,3) = -q(i,3); q(i,5) = -q(i,5); q(i,7) = -q(i,7);
+        optim_arm_R.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[0 60],'tile1color',[10 1 1],'delay',0.0001)
+    end
     
     hold on
     plot(2,1,'r*')
