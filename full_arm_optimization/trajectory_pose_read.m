@@ -33,7 +33,7 @@ function poses = trajectory_pose_read(data_file, m)
         
     
     % For testing purposes
-    % plot_data(em_data_new_b, numsen, n_data)
+%     plot_data(em_data_new_b, numsen, n_data)
     
 end
 

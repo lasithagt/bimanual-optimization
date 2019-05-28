@@ -1,4 +1,4 @@
-% Gives forward kinemtaics of the whole dual arm
+% takes in 
 function fwk = FK(x, q)
     
     fwk = zeros(4,4,2);
@@ -23,7 +23,7 @@ function fwk = FK(x, q)
     
     fwk(:,:,1) = fk_L; fwk(:,:,2) = fk_R;
     
-end
+fend
 
 function fk = FK_func(q_,x)
 

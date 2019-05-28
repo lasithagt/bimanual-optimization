@@ -1,0 +1,45 @@
+function F = cost_function_dual(a, input)
+
+    % OPTIMIZATIONROUTINE This function evaluates the overall objective function (F) for a
+    % specific set of DH parameters
+
+    global theta
+
+    m       = input.m;       % Number of samples
+    n_links = input.n_links; % Number of links
+    pd      = input.pd;
+    n_arms  = input.n_arms;  % Number of arms
+    
+    % Constraints for theta
+    q_min   = input.q_min; 
+    q_max   = input.q_max; 
+
+    % Allocate array space
+    theta   = zeros(input.n_arms * n_links, m);
+    pa      = zeros(4,4,m,input.n_arms);       
+    err_pos = zeros(1,m);
+    f_val   = 0;
+
+    for j = 1:m
+        % To maintain the continuity. Use the previous theta values.
+        if (j > 1)
+            initial_q   = theta(:,j-1);
+        else
+            initial_q   = theta(:,j);
+        end
+
+        
+        temp        = IK(a, pd(:,:,j,:), initial_q, q_min, q_max, input)
+        theta(:,m)  = reshape(temp',[],1);
+        pa(:,:,j,:) = FK(a, temp)
+        
+        for k = 1:n_arms
+            % Position + Orientation 
+            err_pos(:,j,k)  = sum((pd(1:3,end,j,k) - pa(1:3,end,j,k)).^2) + ...
+                            sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,j,k))), rotm2quat(pa(1:3,1:3,j,k)))).^2);
+            f_val           = f_val + err_pos(:,j);
+        end
+       
+    end 
+    F = f_val; 
+end
