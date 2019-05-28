@@ -1,4 +1,4 @@
-function theta = IK(a, pose_des, initial_q, cons_l, cons_u)
+function [theta,f] = IK(a, pose_des, initial_q, cons_l, cons_u)
 
     % IK This function numerically calculates the solution to the inverse
     % kinematics problem.
@@ -7,11 +7,11 @@ function theta = IK(a, pose_des, initial_q, cons_l, cons_u)
     %   pd: desired EE point in the workspace
     
     % Constraints in Ax < b
-    A = [1 0 0 0;0 1 0 0;0 0 1 0;0 0 0 1;-1 0 0 0;0 -1 0 0;0 0 -1 0;0 0 0 -1];
-    b = [cons_u(1);cons_u(2);cons_u(3);cons_u(4);-cons_l(1);-cons_l(2);-cons_l(3);-cons_l(4)];
+    A = [1 0 0 0 0 0 0;0 1 0 0 0 0 0;0 0 1 0 0 0 0;0 0 0 1 0 0 0;0 0 0 0 1 0 0;0 0 0 0 0 1 0;0 0 0 0 0 0 1;...
+         -1 0 0 0 0 0 0;0 -1 0 0 0 0 0;0 0 -1 0 0 0 0;0 0 0 -1 0 0 0;0 0 0 0 -1 0 0;0 0 0 0 0 -1 0;0 0 0 0 0 0 -1];
+    b = [cons_u(1);cons_u(2);cons_u(3);cons_u(4);cons_u(5);cons_u(6);cons_u(7);...
+        -cons_l(1);-cons_l(2);-cons_l(3);-cons_l(4);-cons_l(5);-cons_l(6);-cons_l(7)];
     
-    % Number of links --> 3
-    % initial_q = zeros(1,3);
 
     % Optimization routine to get IK
     options = optimoptions('fmincon','Algorithm','sqp', 'Display','off');

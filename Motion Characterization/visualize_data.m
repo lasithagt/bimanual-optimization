@@ -1,9 +1,12 @@
 
 close all;
 clear;
+
+addpath('../npy-matlab/npy-matlab')
+
 % Load the data from a mat file
 cali_data = readNPY('Data/calibration_data.npy');
-ws_d      = rosbag('Data/2019-05-25-17-38-51.bag');
+ws_d      = rosbag('Data/2019-05-27-14-54-22.bag');
 
 em_data = select(ws_d,'Topic','/EMdata');
 msg_em = cell2mat(readMessages(em_data,'DataFormat','struct'));
@@ -46,7 +49,8 @@ for i = 1:numsen
     % compute the tool tip transformation matrix for all the instruments
     [tool_tip_cal{i}, fval]  = tool_tip_approx_([pos_xyz ang_eul]);
     
-    fval
+    
+    fprintf("Calibration Tool %d error: %d\n",[i, fval])
     % Extract position and angular data and get the tool tip position
     em_data_mat_pos = em_data_mat(1:3,:,i)';
 %     em_data_mat_ang = quat2eul(em_data_mat(4:end,:,i)');
@@ -54,8 +58,8 @@ for i = 1:numsen
     
     for k = 1:n_data
         em_data_adj(1:3,k,i) = em_data_mat_pos(k,:)' + eul2rotm(em_data_mat_ang(k,:),'ZYX')*tool_tip_cal{i}(1:3)';
-        temp = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [0 0 -1]';
-        em_data_adj(4:end,k,i) = temp./norm(temp);
+        temp = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [1 0 0]';
+        em_data_adj(4:end,k,i) = temp;
     end
 
 end
@@ -68,7 +72,7 @@ figure(1)
 % close all;
 line = {'r-','k-'};
 q_ = {'r','b'};
-r = 50;
+r = 10;
 for i=1:numsen
     plot3(em_data_adj(1,:,i), em_data_adj(2,:,i), em_data_adj(3,:,i),line{i})
     hold on

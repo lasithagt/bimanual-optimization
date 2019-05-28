@@ -16,15 +16,18 @@ L_3zz = 0.1; l_3x = 0.1;  l_3y = 0; m_3 = 1; L_4zz = 0.2; l_4x = 0.2; l_4y = 0.1
 
 
 %% Data Structure Generation
-m       = 1;              % Number of discrete points along trajectory
+m       = 10;              % Number of discrete points along trajectory
 n_links = 4;              % Number of revolute joints
-% pa      = zeros(n_links, m, max_iter);    % EE location after FK
 
-des_poses = trajectory_poses(m);
+
+% get desired trajectory poses to optimize for
+data_file = 'Data/EM_data.mat';
+des_poses = trajectory_pose_read(data_file, m);
 pd        = des_poses;           % Trajectory points
 
-q_min = [-pi/2,-pi/2, -pi/2,-pi/2];
-q_max = [pi/2, pi/2, pi/2, pi/2];
+% change the joint limits
+q_min = [-pi/2,-pi/2, -pi/2,-pi/2,-pi/2, -pi/2,-pi/2];
+q_max = [pi/2, pi/2, pi/2, pi/2, pi/2, pi/2, pi/2];
 
 input.m       = m;
 input.n_links = n_links;

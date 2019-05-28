@@ -6,7 +6,7 @@ a1, a2, a3, a4 = symbols('a1 a2 a3 a4')
 d1, d2, d3, d4 = symbols('d1 d2 d3 d4')
 
 # This is for a robot with specific alpha angles
-rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( 'pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( '0', a4, d4, 'q'), ( 'pi/2', 0, 0, 'q'), ( 'pi/2', 0, 0, 'q'), ( 'pi/2', 0, 0, 'q')], dh_convention='standard')
+rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( 'pi/2', a4, d4, 'q'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q'), ( '0', 0, 0, 'q')], dh_convention='standard')
 rbtdef.frictionmodel = {'Coulomb', 'viscous'} # options are None or a combination of 'Coulomb', 'viscous' and 'offset'
 rbtdef.gravityacc = sympy.Matrix([0.0, 0.0, -9.81])
 
