@@ -29,9 +29,9 @@ function F = cost_function_dual(a, input)
         end
 
         
-        temp        = IK(a, pd(:,:,j,:), initial_q, q_min, q_max, input)
+        temp        = IK(a, pd(:,:,j,:), initial_q, q_min, q_max, input);
         theta(:,m)  = reshape(temp',[],1);
-        pa(:,:,j,:) = FK(a, temp)
+        pa(:,:,j,:) = FK(a, temp);
         
         for k = 1:n_arms
             % Position + Orientation 

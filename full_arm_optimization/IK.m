@@ -23,11 +23,11 @@ function [theta,f] = IK(a, pose_des, initial_q, cons_l, cons_u, input)
     
     theta = reshape(theta,input.n_arms,[]);
     function cost = IK_cost(theta)
-        temp_   = FK(a, reshape(theta,input.n_arms,[]))
-        
+        temp_   = FK(a, reshape(theta,input.n_arms,[]));
+        cost = 0;
         for i = 1:input.n_arms
-            cost = sum((temp_(1:3,end) - pose_des(1:3,end,i)).^2) + ...
-                sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pose_des(1:3,1:3,i))), rotm2quat(temp_(1:3,1:3)))).^2);
+            cost = cost + sum((temp_(1:3,end,i) - pose_des(1:3,end,i)).^2) + ...
+                sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pose_des(1:3,1:3,i))), rotm2quat(temp_(1:3,1:3,i)))).^2);
         end
     end
 end

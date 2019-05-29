@@ -9,7 +9,7 @@ function poses = trajectory_pose_read(data_file, m)
     em_data_adj = em_data.em_data_adj;
 
     % convert to z pointing up and changing the position of the base
-    R_b =  rotx(rad2deg(pi))*rotz(rad2deg(pi)) ;
+    R_b =  rotx(pi)*rotz(pi) ;
     p_b = [10.15, 0,0]';
 
     em_data_new_b = zeros(size(em_data_adj));
@@ -31,9 +31,8 @@ function poses = trajectory_pose_read(data_file, m)
         poses(1:3,1:3,:,j) = eul2rotm(em_data_new_b(4:end,t,j)', 'ZYX');
     end
         
-    
     % For testing purposes
-%     plot_data(em_data_new_b, numsen, n_data)
+    plot_data(em_data_new_b, numsen, n_data)
     
 end
 
@@ -42,7 +41,7 @@ function plot_data(em_data_adj, numsen, n_data)
     % close all;
     line = {'r-','k-'};
     q_ = {'r','b'};
-    r = 10;
+    r = 50;
     for i=1:numsen
         plot3(em_data_adj(1,:,i), em_data_adj(2,:,i), em_data_adj(3,:,i),line{i})
         hold on

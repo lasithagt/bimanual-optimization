@@ -16,18 +16,16 @@ L_3zz = 0.1; l_3x = 0.1;  l_3y = 0; m_3 = 1; L_4zz = 0.2; l_4x = 0.2; l_4y = 0.1
 
 
 %% Data Structure Generation
-m       = 1;     % Number of discrete points along trajectory
+m       = 5;     % Number of discrete points along trajectory
 n_links = 7;      % Number of revolute joints
 d_var   = 8;
 
 % get desired trajectory poses to optimize for
-data_file = 'Data/EM_data.mat';
+data_file = 'Data/EM_data_.mat';
 des_poses = trajectory_pose_read(data_file, m);
 
 % % create dummy data points for testing
-des_poses = zeros(4,4,1,2);
-des_poses(:,:,1,1) = [-1 0 0 -0.3;0 1 0 0;0 0 -1 -0.2;0 0 0 1];
-des_poses(:,:,1,2) = [1 0 0 0.3;0 1 0 0;0 0 1 0.2;0 0 0 1];
+% des_poses = zeros(4,4,1,2);
 
 pd = des_poses;       % Trajectory points
 
@@ -47,11 +45,11 @@ input.q_max   = q_max;
 
 func     = @(X)cost_function_dual(X, input);
 func_vec = @(X)cost_function_vec(X, input);
-init_a   = [0.1 0 0 0 0.2 0 0.2 0]; % = [l o_1 o_2 o_3 a1 a2 a3 a4]
+init_a   = [0.1368         0         0         0    3.9976    4.0000    1.0260    3.9974]; % = [l o_1 o_2 o_3 a1 a2 a3 a4]
 
 % % Constraints for physical feasibility 
 a_min    = [0.1 0.0 0.0 0.0 0.1 0.1 0.1 0.1];
-a_max    = [2 pi pi pi 2 2 2 2];
+a_max    = [2 pi pi pi 4 4 4 4];
 A        = [eye(d_var); -eye(d_var)];
 b        = [a_max'; a_min'];
 
@@ -62,8 +60,10 @@ cost_function_dual(init_a, input)
 % options_cp  = optimoptions('fmincon','Display','iter','Algorithm','sqp');
 % optim_a  = fmincon(func, init_a, A, b,[],[],[],[],[],options_cp);
 
-options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',200);
+options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',300);
 optim_a     = simulannealbnd(func,init_a,a_min,a_max,options_sa);
+
+plot_animate(optim_a, input);
 
 t_init = [0.5;0.5;0.5;0.5];
 

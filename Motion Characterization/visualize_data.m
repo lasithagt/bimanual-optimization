@@ -2,11 +2,11 @@
 close all;
 clear;
 
-addpath('../npy-matlab/npy-matlab')
+% addpath('../npy-matlab/npy-matlab')
 
 % Load the data from a mat file
 cali_data = readNPY('Data/calibration_data.npy');
-ws_d      = rosbag('Data/2019-05-27-14-54-22.bag');
+ws_d      = rosbag('Data/2019-05-28-17-24-58.bag');
 
 em_data = select(ws_d,'Topic','/EMdata');
 msg_em = cell2mat(readMessages(em_data,'DataFormat','struct'));
@@ -79,8 +79,8 @@ for i=1:numsen
     for j=1:n_data
         if mod(j,r) == 0
 
-            quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
-                em_data_adj(4,j,i),em_data_adj(5,j,i),em_data_adj(6,j,i),q_{i},'LineWidth',2,'MaxHeadSize',0.5)
+%             quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
+%                 em_data_adj(4,j,i),em_data_adj(5,j,i),em_data_adj(6,j,i),q_{i},'LineWidth',2,'MaxHeadSize',0.5)
 
             hold on
         end

@@ -14,7 +14,8 @@ function fwk = FK(x, q)
     T_R(1:3,end) = [x(1);0;0];
     
     q_L = q(1,:); 
-    q_L(1) = -q_L(1); q_L(3) = -q_L(3); q_L(5) = -q_L(5);
+%     q_L(2) = -q_L(2); q_L(4) = -q_L(4); q_L(6) = -q_L(6);
+    q_L = -q_L;
     q_R = q(2,:);
     
     fk_L = T_L * FK_func(q_L, x(5:end));
