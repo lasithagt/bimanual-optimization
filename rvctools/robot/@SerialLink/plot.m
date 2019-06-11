@@ -364,7 +364,7 @@ function h = create_robot(robot, opt)
         if opt.joints
             % create the body of the joint
             if links(L).isrevolute
-                RTBPlot.cyl('z', opt.jointdiam*s, opt.jointlen*s*[-1 1], opt.jointcolor, [], 'Parent', h.link(L));
+                RTBPlot.cyl('z', opt.jointdiam*s, 0.5*opt.jointlen*s*[-1 1], opt.jointcolor, [], 'Parent', h.link(L));
             else
                 % create an additional hgtransform for positioning and scaling the prismatic
                 % element.  The element is created with unit length.
@@ -404,13 +404,13 @@ function h = create_robot(robot, opt)
                 Ainv = inv(links(L-1).A(0));
                 t = Ainv.t;
                 if t(1) ~= 0
-                    RTBPlot.cyl('x', s, [0 t(1)], opt.linkcolor, [], 'Parent', h.link(L));
+                    RTBPlot.cyl('x', 0.5*s, [0 t(1)], opt.linkcolor, [], 'Parent', h.link(L));
                 end
                 if t(2) ~= 0
-                    RTBPlot.cyl('y', s, [s t(2)], opt.linkcolor, [t(1) 0 0], 'Parent', h.link(L));
+                    RTBPlot.cyl('y', 0.5*s, [s t(2)], opt.linkcolor, [t(1) 0 0], 'Parent', h.link(L));
                 end
                 if t(3) ~= 0
-                    RTBPlot.cyl('z', s, [s t(3)], opt.linkcolor, [t(1) t(2) 0], 'Parent', h.link(L));
+                    RTBPlot.cyl('z', 0.5*s, [s t(3)], opt.linkcolor, [t(1) t(2) 0], 'Parent', h.link(L));
                 end
                 %line([0 t(1)]', [0 t(2)]', [0 t(3)]', 'Parent', h.link(L));
             end

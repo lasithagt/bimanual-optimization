@@ -14,7 +14,7 @@ function [theta,f] = IK(a, pose_des, initial_q, cons_l, cons_u, input)
         -cons_l(1);-cons_l(2);-cons_l(3);-cons_l(4);-cons_l(5);-cons_l(6);-cons_l(7);...
         -cons_l(1);-cons_l(2);-cons_l(3);-cons_l(4);-cons_l(5);-cons_l(6);-cons_l(7)];
     
-
+    
     % TODO: Matlab Robotics Systems toolbox to get the ik solver.
     % Optimization routine to get IK
     options          = optimoptions('fmincon','Algorithm','interior-point', 'Display','off');
@@ -24,7 +24,7 @@ function [theta,f] = IK(a, pose_des, initial_q, cons_l, cons_u, input)
     theta = reshape(theta,input.n_arms,[]);
     function cost = IK_cost(theta)
         temp_   = FK(a, reshape(theta,input.n_arms,[]));
-        cost = 0;
+        cost    = 0;
         for i = 1:input.n_arms
             cost = cost + sum((temp_(1:3,end,i) - pose_des(1:3,end,i)).^2) + ...
                 sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pose_des(1:3,1:3,i))), rotm2quat(temp_(1:3,1:3,i)))).^2);

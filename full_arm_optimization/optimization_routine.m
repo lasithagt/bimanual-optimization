@@ -5,26 +5,28 @@ close all;
 % "Joint Optimization of Robot Design and Motion Parameters using the
 % Implicit Function Theorem" RSS 2017
 
-global L_1xx L_1xy L_1xz L_1yy L_1yz L_1zz l_1x l_1y l_1z m_1 fv_1 fc_1 L_2xx L_2xy L_2xz L_2yy L_2yz L_2zz l_2x l_2y l_2z m_2 fv_2 fc_2...
-        L_3xx L_3xy L_3xz L_3yy L_3yz L_3zz l_3x l_3y l_3z m_3 fv_3 fc_3 L_4xx L_4xy L_4xz L_4yy L_4yz L_4zz l_4x l_4y l_4z m_4 fv_4 fc_4
+% global L_1xx L_1xy L_1xz L_1yy L_1yz L_1zz l_1x l_1y l_1z m_1 fv_1 fc_1 L_2xx L_2xy L_2xz L_2yy L_2yz L_2zz l_2x l_2y l_2z m_2 fv_2 fc_2...
+%         L_3xx L_3xy L_3xz L_3yy L_3yz L_3zz l_3x l_3y l_3z m_3 fv_3 fc_3 L_4xx L_4xy L_4xz L_4yy L_4yz L_4zz l_4x l_4y l_4z m_4 fv_4 fc_4
+
 global theta;
-global des_poses
+global input
 
 % Positions to be reached. (position and orientation)
-L_1zz = 0.1; l_1x = 0.1;  m_1 = 1; L_2zz = 0.2; l_2x = 0.1; l_2y = 0.2; m_2 = 2;
-L_3zz = 0.1; l_3x = 0.1;  l_3y = 0; m_3 = 1; L_4zz = 0.2; l_4x = 0.2; l_4y = 0.1; m_4 = 2;
+% L_1zz = 0.1; l_1x = 0.1;  m_1 = 1; L_2zz = 0.2; l_2x = 0.1; l_2y = 0.2; m_2 = 2;
+% L_3zz = 0.1; l_3x = 0.1;  l_3y = 0; m_3 = 1; L_4zz = 0.2; l_4x = 0.2; l_4y = 0.1; m_4 = 2;
 
 
 %% Data Structure Generation
-m       = 5;     % Number of discrete points along trajectory
+m       = 30;     % Number of discrete points along trajectory
 n_links = 7;      % Number of revolute joints
 d_var   = 8;
+n_arms  = 2;
 
 % get desired trajectory poses to optimize for
-data_file = 'Data/EM_data_.mat';
+data_file = 'Data/name_writing.mat';
 des_poses = trajectory_pose_read(data_file, m);
 
-% % create dummy data points for testing
+% create dummy data points for testing
 % des_poses = zeros(4,4,1,2);
 
 pd = des_poses;       % Trajectory points
@@ -35,41 +37,63 @@ q_max = [pi/2, pi/2, pi/2, pi/2, pi/2, pi/2, pi/2];
 
 input.m       = m;
 input.n_links = n_links;
-input.n_arms  = 2;
+input.n_arms  = n_arms;
 input.pd      = pd;
 input.q_min   = q_min;
 input.q_max   = q_max;
 
+T_L = eye(4);
+T_R = eye(4);
+
+T_R(1:3,1:3) = roty(-pi/2)*rotx(-1*pi/4);
+T_R(1:3,end) = [0.4746;-12;0];
+T_L(1:3,1:3) = roty(pi/2)*rotx(-1*pi/4);
+T_L(1:3,end) = [-0.4746;-12;0];
+
+input.T_L = T_L;
+input.T_R = T_R;
+
+input.link_variables = [0.0395 6.0000 0.0076 1.5603];
+input.tool = 1;
+
+% joint positions for the given desired positions
+input.curr_q = zeros(n_links, m, n_arms);
 %% Solve the kinematic problem to satisfy the reachability. These lq would
 % allow to be on the fk manifold. (position + orientation)
 
 func     = @(X)cost_function_dual(X, input);
+func_INVJAC     = @(X)cost_function_dual_INVJAC(X);
 func_vec = @(X)cost_function_vec(X, input);
-init_a   = [0.1368         0         0         0    3.9976    4.0000    1.0260    3.9974]; % = [l o_1 o_2 o_3 a1 a2 a3 a4]
 
+% = [l o_1 o_2 o_3 a1 a2 a3 a4]
+init_a   = [0.1780  -13.7830    1.2084    0.6030    0.0327    1.3309    3.4178    2.7597]; 
 % % Constraints for physical feasibility 
-a_min    = [0.1 0.0 0.0 0.0 0.1 0.1 0.1 0.1];
-a_max    = [2 pi pi pi 4 4 4 4];
+a_min    = [0 -15 0.0 0.0 0 0 0 0.1];
+a_max    = [5 -5 pi/2 pi/2 2 6 6 6];
 A        = [eye(d_var); -eye(d_var)];
 b        = [a_max'; a_min'];
 
-cost_function_dual(init_a, input)
-
 % use fmincon or sa to solve to get a prior solution for the design
-% parameters
+% % parameters
 % options_cp  = optimoptions('fmincon','Display','iter','Algorithm','sqp');
-% optim_a  = fmincon(func, init_a, A, b,[],[],[],[],[],options_cp);
+% optim_X  = fmincon(func_INVJAC, init_a, A, b,[],[],[],[],[],options_cp)
 
-options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',300);
-optim_a     = simulannealbnd(func,init_a,a_min,a_max,options_sa);
+% define a function in SA to generate samples
+% options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',100);
+% optim_X     = simulannealbnd(func_INVJAC,init_a,a_min,a_max,options_sa)
+optim_X = init_a;
 
-plot_animate(optim_a, input);
+cost_function_dual_INVJAC(optim_X)
+
+save('robot.mat','input');
+
+plot_animate(optim_X, input, data_file);
 
 t_init = [0.5;0.5;0.5;0.5];
 
-lq = [theta(:)', optim_a];
+lq = [theta(:)', optim_X];
 J  = J_(lq);
-v  = pinv(J(1:2,1:4)')*t_init;
+v  = pinv(J(1:2,1:4)') * t_init;
 % x  = [lq v'];
 
 %% Get the partials from implicit constraints

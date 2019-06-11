@@ -2,11 +2,12 @@ import sympy
 import sympybotics
 from sympy import symbols, diff
 from sympybotics._compatibility_ import exec_
-a1, a2, a3, a4 = symbols('a1 a2 a3 a4')
+a1, a2, a3, a4, tool = symbols('a1 a2 a3 a4 tool')
 d1, d2, d3, d4 = symbols('d1 d2 d3 d4')
-
 # This is for a robot with specific alpha angles
-rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( 'pi/2', a4, d4, 'q'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q'), ( '0', 0, 0, 'q')], dh_convention='standard')
+# rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( 'pi/2', a4, d4, 'q'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q'), ( '0', 0, 0, 'q')], dh_convention='standard')
+rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( '0', a4, d4, 'q-pi/2'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q-pi/2'), ( '0', 0, tool, 'q')], dh_convention='standard')
+
 rbtdef.frictionmodel = {'Coulomb', 'viscous'} # options are None or a combination of 'Coulomb', 'viscous' and 'offset'
 rbtdef.gravityacc = sympy.Matrix([0.0, 0.0, -9.81])
 
@@ -47,6 +48,8 @@ diff_fk_d2_list = ([], diff_fk_d2)
 diff_fk_d3_list = ([], diff_fk_d3)
 diff_fk_d4_list = ([], diff_fk_d4)
 
+jac = ([],jac)
+
 FK_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', fk_list, 'FK', 'FK_kuka', rbtdef)
 
 FK_a1_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', diff_fk_a1_list, 'FK_a1', 'FK_kuka_a1', rbtdef)
@@ -58,6 +61,8 @@ FK_d1_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', diff_fk_
 FK_d2_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', diff_fk_d2_list, 'FK_d2', 'FK_kuka_d2', rbtdef)
 FK_d3_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', diff_fk_d3_list, 'FK_d3', 'FK_kuka_d3', rbtdef)
 FK_d4_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', diff_fk_d4_list, 'FK_d4', 'FK_kuka_d4', rbtdef)
+
+Jac_func_def  = sympybotics.robotcodegen.robot_code_to_func('matlab', jac, 'Jac', 'Jac', rbtdef)
 
 M_func_def   = sympybotics.robotcodegen.robot_code_to_func('matlab', rbt.M_code, 'M', 'M_kuka', rbtdef)
 C_func_def   = sympybotics.robotcodegen.robot_code_to_func('matlab', rbt.C_code, 'C', 'C_kuka', rbtdef)
@@ -76,6 +81,8 @@ file.write(FK_d1_func_def)
 file.write(FK_d2_func_def)
 file.write(FK_d3_func_def)
 file.write(FK_d4_func_def)
+
+file.write(Jac_func_def)
 
 file.write(FK_func_def) 
 file.write(M_func_def) 

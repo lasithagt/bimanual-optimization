@@ -21,17 +21,21 @@ function F = cost_function_dual(a, input)
     f_val   = 0;
 
     for j = 1:m
+        
         % To maintain the continuity. Use the previous theta values.
         if (j > 1)
             initial_q   = theta(:,j-1);
         else
             initial_q   = theta(:,j);
         end
-
         
         temp        = IK(a, pd(:,:,j,:), initial_q, q_min, q_max, input);
         theta(:,m)  = reshape(temp',[],1);
-        pa(:,:,j,:) = FK(a, temp);
+        pa(:,:,j,:) = FK(a, temp, input);
+
+        
+        theta(:,m)  = reshape(temp',[],1);
+        pa(:,:,j,:) = FK(a, temp, input);
         
         for k = 1:n_arms
             % Position + Orientation 

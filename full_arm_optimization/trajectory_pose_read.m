@@ -9,8 +9,8 @@ function poses = trajectory_pose_read(data_file, m)
     em_data_adj = em_data.em_data_adj;
 
     % convert to z pointing up and changing the position of the base
-    R_b =  rotx(pi)*rotz(pi) ;
-    p_b = [10.15, 0,0]';
+    R_b =  rotz(pi/2)*rotx(pi)*rotz(pi) ;
+    p_b = [0, 10.15,0]';
 
     em_data_new_b = zeros(size(em_data_adj));
     
@@ -18,38 +18,45 @@ function poses = trajectory_pose_read(data_file, m)
         new_p = R_b * em_data_adj(1:3,:,i) + p_b;
         em_data_new_b(1:3,:,i) = new_p;
         
-        new_R = R_b * rotm2eul(eul2rotm(em_data_adj(4:end,:,i)','ZYX'),'ZYX')';
-        em_data_new_b(4:end,:,i) = new_R;
+        for j = 1:n_data
+            new_R = rotm2eul(R_b * eul2rotm(em_data_adj(4:end,j,i)','ZYX'),'ZYX')';
+            em_data_new_b(4:end,j,i) = new_R;
+        end
     end
 
-    poses = ones(4,4,n_poses,numsen);
+    poses = zeros(4,4,n_poses,numsen);
+    poses(4,4,:,:) = 1;
     % give requested number of data points from the entire trajectory.
 
-    for j = 1:numsen
+    for i = 1:numsen
         t = floor(linspace(1, n_data,n_poses));
-        poses(1:3,end,:,j) = em_data_new_b(1:3,t,j);
-        poses(1:3,1:3,:,j) = eul2rotm(em_data_new_b(4:end,t,j)', 'ZYX');
+        poses(1:3,end,:,i) = em_data_new_b(1:3,t,i);
+        poses(1:3,1:3,:,i) = eul2rotm(em_data_new_b(4:end,t,i)', 'ZYX');
     end
         
     % For testing purposes
-    plot_data(em_data_new_b, numsen, n_data)
+%     plot_data(poses, numsen, n_poses)
     
 end
 
-function plot_data(em_data_adj, numsen, n_data) 
+function plot_data(poses, numsen, n_data) 
     figure(1)
     % close all;
     line = {'r-','k-'};
     q_ = {'r','b'};
-    r = 50;
+    r = 7;
+    
     for i=1:numsen
-        plot3(em_data_adj(1,:,i), em_data_adj(2,:,i), em_data_adj(3,:,i),line{i})
+        p = reshape(poses(1:3,end,:,i),3,[]);
+        
+        plot3(p(1,:), p(2,:), p(3,:),line{i})
         hold on
         for j=1:n_data
             if mod(j,r) == 0
 
-                quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
-                    em_data_adj(4,j,i),em_data_adj(5,j,i),em_data_adj(6,j,i),q_{i},'LineWidth',2,'MaxHeadSize',0.5)
+                quiver3(poses(1,end,j,i), poses(2,end,j,i), poses(3,end,j,i), ...
+                    poses(1,1:3,j,i)*[0 0 1]', poses(2,1:3,j,i)*[0 0 1]',...
+                    poses(3,1:3,j,i)*[0 0 1]',q_{i},'LineWidth',2,'MaxHeadSize',0.5)
 
                 hold on
             end
