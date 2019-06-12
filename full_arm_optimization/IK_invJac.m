@@ -2,7 +2,7 @@
 function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d) 
 
     global input
-    iter_max = 100;
+    iter_max = 200;
     pa = FK(x, curr_q);
     pd = new_cart_pose;
     
@@ -10,7 +10,7 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
     v_o = vel_d(4:end);
     
     % make it changable 
-    Ko = 0.7; Kp = -2.7;
+    Ko = 0.7; Kp = -3.0;
     q_ret = zeros(input.n_arms,input.n_links);
     
     % for the dual arm, coordinate frames are rotated.
@@ -26,11 +26,12 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
         err_rel = 100; %norm(pa(:,:,i) - pd(:,:,i)).^2;
         q_new   = curr_q(i,:)';
         iter = 0;
+        
         while(err_rel > 1e-5 && err > 1e-8 && iter<=iter_max)
             iter = iter + 1;
             e_p = (curr_p(1:3,end,i) - pd(1:3,end,i));
             e_o = [1 0 0 0]' - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i)))';
-            e_o = [0 0 0 0]';
+%             e_o = [0 0 0 0]';
             % TODO: solve for q_dot that gives more manipulability.
             
             % check for singularities and adds dampening if so.
@@ -39,8 +40,8 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             J  = RR * Jacob(curr_q(i,:), x(5:end));
             
             % dealing with singularities
-            if (rcond(J*J') < 0.001) 
-                J_m = J'/(J*J' + 0.001 * eye(6)) ;
+            if (rcond(J*J') < 0.01) 
+                J_m = J'/(J*J' + 0.01 * eye(6)) ;
             else
                 J_m = J'/(J*J');
             end
@@ -51,7 +52,11 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             q_ret(i,:) = q_new;
             curr_p  = FK(x, q_ret);
             err_n = sqrt(sum((pd(1:3,end,i) - curr_p(1:3,end,i)).^2) + ...
-                            0*sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
+                            sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
+            if (err_n > err)
+                break;
+            end
+            
             err_rel = abs(err_n - err)./err;
             err = err_n;
             
