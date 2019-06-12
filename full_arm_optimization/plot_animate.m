@@ -18,7 +18,7 @@ function plot_animate(x, input, data_file)
     L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset', offset(6));
     L7 = Link('d', tool, 'a',    0, 'alpha', alpha(7),'offset', offset(7));
     
-    m             = 60;
+    m             = 500;
     q_min         = input.q_min;
     q_max         = input.q_max;
     des_poses     = trajectory_pose_read(data_file, m);

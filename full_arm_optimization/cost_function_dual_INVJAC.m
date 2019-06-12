@@ -11,10 +11,7 @@ function F = cost_function_dual_INVJAC(x)
     n_links = input.n_links; % Number of links
     pd      = input.pd;
     n_arms  = input.n_arms;  % Number of arms
-    
-    % Constraints for theta
-%     q_min   = input.q_min; 
-%     q_max   = input.q_max; 
+     
 
     % Allocate array space
     theta   = zeros(input.n_arms * n_links, m);
