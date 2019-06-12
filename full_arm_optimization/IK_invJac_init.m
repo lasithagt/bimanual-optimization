@@ -1,8 +1,8 @@
 % This function takes in current q position, new_cartesian point and vel_d
-function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d) 
+function [q_ret,err] = IK_invJac_init(x, curr_q, new_cart_pose, vel_d) 
 
     global input
-    iter_max = 5000;
+    iter_max = 1500;
     pa = FK(x, curr_q);
     pd = new_cart_pose;
     
@@ -10,7 +10,7 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
     v_o = vel_d(4:end);
     
     % make it changable 
-    Ko = 0.01; Kp = -0.01;
+    Ko = 0.1; Kp = -0.1;
     q_ret = zeros(input.n_arms,input.n_links);
     
     % for the dual arm, coordinate frames are rotated.
@@ -30,13 +30,13 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             iter = iter + 1;
             e_p = (curr_p(1:3,end,i) - pd(1:3,end,i));
             e_o = [1 0 0 0]' - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i)))';
-            e_o = [0 0 0 0]';
+
             % TODO: solve for q_dot that gives more manipulability.
             
             % check for singularities and adds dampening if so.
             R  = T(1:3,1:3,i);
             RR = [R zeros(3,3);zeros(3,3) R];
-            J  = RR * Jacob(curr_q(i,:), x(5:end));
+            J  = RR * Jacob(curr_q(i,:), x);
             
             % dealing with singularities
             if (rcond(J*J') < 0.001) 
@@ -50,12 +50,8 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             q_new   = q_new + qdot * 0.001;
             q_ret(i,:) = q_new;
             curr_p  = FK(x, q_ret);
-            err_p = 
             err_rel = abs(norm(curr_p(:,:,i) - pd(:,:,i)).^2 - err)./err;
-%             err     = norm(curr_p(1:3,end,i) - pd(1:3,end,i)).^2 ;
-            err = sqrt(sum((pd(1:3,end,i) - curr_p(1:3,end,i)).^2) + ...
-                            sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
-            
+            err     = norm(curr_p(:,:,i) - pd(:,:,i)).^2;
         end
         
     

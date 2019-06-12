@@ -10,10 +10,6 @@ function fwk = FK(x, q)
     T_L = input.T_L;
     T_R = input.T_R;
      
-    %     T_L(1:3,1:3) = roty(pi/2);
-    %     T_L(1:3,end) = [x(1);0;0];
-    %     T_R(1:3,1:3) = roty(-pi/2);
-    %     T_R(1:3,end) = [-x(1);0;0];
     
     q_L = q(1,:);  % First row of the q vector is Left arm
     q_R = q(2,:);  % Second row of the q vector is Right arm
@@ -29,8 +25,9 @@ function fwk = FK(x, q)
 end
 
 function fk = FK_func(q_,x)
+    global input
 
-    d1 = x(1); d2 = x(2); d3 = x(3); d4 = 0; tool = 1;
+    d1 = x(1); d2 = x(2); d3 = x(3); d4 = 0; tool = input.tool;
     a1 = 0; a2 = 0; a3 = 0; a4 = x(4);
 
     q = @(n)q_(n+1);

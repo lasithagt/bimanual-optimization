@@ -17,7 +17,7 @@ global input
 
 
 %% Data Structure Generation
-m       = 30;     % Number of discrete points along trajectory
+m       = 3;     % Number of discrete points along trajectory
 n_links = 7;      % Number of revolute joints
 d_var   = 8;
 n_arms  = 2;
@@ -32,8 +32,8 @@ des_poses = trajectory_pose_read(data_file, m);
 pd = des_poses;       % Trajectory points
 
 % define joint limits
-q_min = [-pi/2,-pi/2, -pi/2,-pi/2,-pi/2, -pi/2,-pi/2];
-q_max = [pi/2, pi/2, pi/2, pi/2, pi/2, pi/2, pi/2];
+q_min = [-pi,-pi, -pi/2,-pi,-3*pi/4, -3*pi/4,-3*pi/4];
+q_max = [pi, pi, pi/2, pi, 3*pi/4, 3*pi/4, 3*pi/4];
 
 input.m       = m;
 input.n_links = n_links;
@@ -46,9 +46,9 @@ T_L = eye(4);
 T_R = eye(4);
 
 T_R(1:3,1:3) = roty(-pi/2)*rotx(-1*pi/4);
-T_R(1:3,end) = [0.4746;-12;0];
+T_R(1:3,end) = [0.5;-12;2];
 T_L(1:3,1:3) = roty(pi/2)*rotx(-1*pi/4);
-T_L(1:3,end) = [-0.4746;-12;0];
+T_L(1:3,end) = [-0.5;-12;2];
 
 input.T_L = T_L;
 input.T_R = T_R;
@@ -66,7 +66,7 @@ func_INVJAC     = @(X)cost_function_dual_INVJAC(X);
 func_vec = @(X)cost_function_vec(X, input);
 
 % = [l o_1 o_2 o_3 a1 a2 a3 a4]
-init_a   = [0.1780  -13.7830    1.2084    0.6030    0.0327    1.3309    3.4178    2.7597]; 
+init_a   = [4.7875  -12.3765    1.0806    1.3030    1.6627    2.9388    3.8017    4.9553]; 
 % % Constraints for physical feasibility 
 a_min    = [0 -15 0.0 0.0 0 0 0 0.1];
 a_max    = [5 -5 pi/2 pi/2 2 6 6 6];

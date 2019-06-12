@@ -1,4 +1,4 @@
-function plot_animate(x, input, data_file)
+function plot_animate_test(x, input, data_file)
     
     close all;
     clf(gcf)
@@ -18,18 +18,16 @@ function plot_animate(x, input, data_file)
     L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset', offset(6));
     L7 = Link('d', tool, 'a',    0, 'alpha', alpha(7),'offset', offset(7));
     
-    m             = 60;
+    m             = 10;
     q_min         = input.q_min;
     q_max         = input.q_max;
-    des_poses     = trajectory_pose_read(data_file, m);
-%     p_1 = eye(4); p_1(1:3,1:3) = rotx(pi); p_1(1:3,end) = [-0 -7 0];
-%     des_poses(:,:,1,1) = p_1;
-%     des_poses(:,:,1,2) = p_1;
-    pd  = des_poses(:,:,:,:);
-
-%     m   = 120;
-%     pd(1:3,1:3,1,1) = rotx(pi)*pd(1:3,1:3,1,1);
-%     pd(1:3,1:3,1,2) = rotx(pi)*pd(1:3,1:3,1,2);
+%     des_poses     = trajectory_pose_read(data_file, m);
+    p_1 = eye(4); p_1(1:3,1:3) = rotx(pi); p_1(1:3,end) = [-0 -7 0];
+    des_poses(:,:,1,1) = p_1;
+    
+    des_poses(:,:,1,2) = p_1;
+    pd  = des_poses(:,:,10,:); 
+    m = 1;
     % Display the current manipulator.
 
     T_base_1 = SE3(input.T_L);
@@ -38,37 +36,36 @@ function plot_animate(x, input, data_file)
     mini_chain_1 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_R','base', T_base_1);
     mini_chain_2 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_L','base', T_base_2);
     
-    theta   = zeros(input.n_arms * input.n_links, m);
-
+    theta    = zeros(input.n_arms * input.n_links, m);
     anim_pos = [];
+    vel_d          = [0 0 0 0 0 0]';
     
     initial_q      = [0 0 0 0 0 0 0 0 0 0 0 0 0 0];
     [temp_init, f] = IK(x, pd(:,:,1,:), initial_q);
+
     theta(:,1)     = reshape(temp_init,[],1);
     pa(:,:,1,:)    = FK(x, temp_init');
-    vel_d          = [0 0 0 0 0 0]';
+    
     temp_t         = temp_init';
+    
     anim_pos(:,:,1,1) = input.T_L*mini_chain_1.A(1:7,temp_t(1,:)).T;
     anim_pos(:,:,1,2) = input.T_R*mini_chain_2.A(1:7,temp_t(2,:)).T;
-    
-    % pd_(:,:,2) = eye(4); pd_(1:3,end,1) = [-4,-5,0]; pd_(1:3,end,2) = [-4,-5,0];
-    % [t_,f]     = IK(x, pd_, initial_q, q_min, q_max, input);
-    
-    err_v = [];
+
+        
     for j = 1:m-1
-       [temp_t, err] =  IK_invJac(x, temp_t, pd(:,:,1+j,:), vel_d);
-       err_v(j) = err;
+       [temp_t, ~] =  IK_invJac(x, temp_t, pd(:,:,1+j,:), vel_d);
        theta(:,j+1)  =  reshape(temp_t',[],1);
        pa(:,:,j+1,:) =  FK(x, temp_t);
        anim_pos(:,:,j+1,1) = input.T_L*mini_chain_1.A(1:7,temp_t(1,:)).T;
        anim_pos(:,:,j+1,2) = input.T_R*mini_chain_2.A(1:7,temp_t(2,:)).T;
     end 
+
     q_L = theta(1:7,:);
     q_R = theta(8:end,:);
     
     % Plot both robots together
     fig = figure(1);
-    ws = [-8 8 -18 5 -4 7];
+    ws = [-8 8 -18 5 -10 10];
     myVideo = VideoWriter('myfile.avi');
     myVideo.FrameRate = 15;  % Default 30
     myVideo.Quality = 50;    % Default 75

@@ -13,8 +13,8 @@ function F = cost_function_dual_INVJAC(x)
     n_arms  = input.n_arms;  % Number of arms
     
     % Constraints for theta
-    q_min   = input.q_min; 
-    q_max   = input.q_max; 
+%     q_min   = input.q_min; 
+%     q_max   = input.q_max; 
 
     % Allocate array space
     theta   = zeros(input.n_arms * n_links, m);
@@ -30,10 +30,10 @@ function F = cost_function_dual_INVJAC(x)
     
     % solve for the init q using cons opt.
     initial_q   = [0 0 0 0 0 0 0 0 0 0 0 0 0 0];
-    temp_init   = IK(x, pd(:,:,1,:), initial_q, q_min, q_max, input);
-    theta(:,1)  = reshape(temp_init',[],1);
-    pa(:,:,1,:) = FK(x, temp_init);
-    temp_t      = temp_init;
+    temp_init   = IK(x, pd(:,:,1,:), initial_q);
+    theta(:,1)  = reshape(temp_init,[],1);
+    pa(:,:,1,:) = FK(x, temp_init');
+    temp_t      = temp_init';
     
     for j = 1:m-1
        temp_t =  IK_invJac(x, temp_t, pd(:,:,1+j,:), vel_d);
