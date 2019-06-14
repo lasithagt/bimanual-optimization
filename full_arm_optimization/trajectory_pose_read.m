@@ -31,7 +31,9 @@ function poses = trajectory_pose_read(data_file, m)
     for i = 1:numsen
         t = floor(linspace(1, n_data,n_poses));
         poses(1:3,end,:,i) = em_data_new_b(1:3,t,i);
-        poses(1:3,1:3,:,i) = eul2rotm(em_data_new_b(4:end,t,i)', 'ZYX');
+        for k = 1:n_poses
+            poses(1:3,1:3,k,i) = rotz(pi) * eul2rotm(em_data_new_b(4:end,t(k),i)', 'ZYX');
+        end
     end
         
     % For testing purposes

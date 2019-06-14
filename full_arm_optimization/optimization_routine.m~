@@ -24,6 +24,7 @@ n_arms  = 2;
 
 % get desired trajectory poses to optimize for
 data_file = 'Data/name_writing_sticky_note.mat';
+% data_file = 'Data/name_writing.mat';
 des_poses = trajectory_pose_read(data_file, m);
 
 % create dummy data points for testing
@@ -33,7 +34,7 @@ pd = des_poses;       % Trajectory points
 
 % define joint limits
 q_min = [-pi,-pi, -pi/2,-pi,-3*pi/4, -3*pi/4,-3*pi/4];
-q_max = [pi, pi, pi/2, pi, 3*pi/4, 3*pi/4, 3*pi/4];
+q_max = [ pi, pi, pi/2, pi, 3*pi/4, 3*pi/4, 3*pi/4];
 
 input.m       = m;
 input.n_links = n_links;
@@ -46,9 +47,9 @@ T_L = eye(4);
 T_R = eye(4);
 
 T_R(1:3,1:3) = roty(-pi/2)*rotx(-1*pi/4);
-T_R(1:3,end) = [0.5;-12;2];
+T_R(1:3,end) = [0.5;-12;3];
 T_L(1:3,1:3) = roty(pi/2)*rotx(-1*pi/4);
-T_L(1:3,end) = [-0.5;-12;2];
+T_L(1:3,end) = [-0.5;-12;3];
 
 input.T_L = T_L;
 input.T_R = T_R;
@@ -66,26 +67,35 @@ func_INVJAC     = @(X)cost_function_dual_INVJAC(X);
 func_vec = @(X)cost_function_vec(X, input);
 
 % = [l o_1 o_2 o_3 a1 a2 a3 a4]
-init_a   = []; 
+init_a   = [2.4354  -10.2294    0.7530    1.4584    1.4269         0    4.1412    3.9466]; 
 % % Constraints for physical feasibility 
 a_min    = [0 -15 0.0 0.0 0 0 0 0.1];
-a_max    = [5 -5 pi/2 pi/2 2 6 6 6];
+a_max    = [5 -10 pi/2 pi/2 2 0 6 6];
 A        = [eye(d_var); -eye(d_var)];
 b        = [a_max'; a_min'];
 
 % use fmincon or sa to solve to get a prior solution for the design
-% % parameters
+
+%% Constrained Optimization
 % options_cp  = optimoptions('fmincon','Display','iter','Algorithm','sqp');
 % optim_X  = fmincon(func_INVJAC, init_a, A, b,[],[],[],[],[],options_cp)
 
+%% Simulated Annealing
 % define a function in SA to generate samples
-% options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',100);
+% options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',200);
 % optim_X     = simulannealbnd(func_INVJAC,init_a,a_min,a_max,options_sa)
-optim_X = init_a;
+
+%% Genetic Algorithm
+rng default % For reproducibility
+options_ga = optimoptions('ga','ConstraintTolerance',1e-6,'PlotFcn', @gaplotbestf);
+optim_X    = ga(func_INVJAC,8,A,b,[],[],a_min,a_max,[],options_ga);
+
+
+% optim_X = init_a;
 
 cost_function_dual_INVJAC(optim_X)
 
-save('robot.mat','input');
+save('Data/robot_temp.mat','input');
 
 plot_animate(optim_X, input, data_file);
 
