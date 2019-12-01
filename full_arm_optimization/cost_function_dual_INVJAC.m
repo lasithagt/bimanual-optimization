@@ -13,8 +13,8 @@ function F = cost_function_dual_INVJAC(x)
     n_arms  = input.n_arms;  % Number of arms
     
     % Constraints for theta
-%     q_min   = input.q_min; 
-%     q_max   = input.q_max; 
+    % q_min   = input.q_min; 
+    % q_max   = input.q_max; 
 
     % Allocate array space
     theta   = zeros(input.n_arms * n_links, m);
@@ -30,7 +30,7 @@ function F = cost_function_dual_INVJAC(x)
     
     % solve for the init q using cons opt.
     initial_q   = [0 0 0 0 0 0 0 0 0 0 0 0 0 0];
-    temp_init   = IK(x, pd(:,:,1,:), initial_q);
+    [temp_init,f]   = IK(x, pd(:,:,1,:), initial_q);
     theta(:,1)  = reshape(temp_init,[],1);
     pa(:,:,1,:) = FK(x, temp_init');
     temp_t      = temp_init';
@@ -44,11 +44,12 @@ function F = cost_function_dual_INVJAC(x)
         for k = 1:n_arms
             % Error on Position and Orientation 
             err_pos(:,j,k)  = sum((pd(1:3,end,j,k) - pa(1:3,end,j,k)).^2) + ...
-                            sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,j,k))), rotm2quat(pa(1:3,1:3,j,k)))).^2);
+                                sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,j,k))), rotm2quat(pa(1:3,1:3,j,k)))).^2);
             f_val           = f_val + err_pos(:,j);
         end
        
     end 
-    F = f_val; 
+    x;
+    F = f_val;
     
 end

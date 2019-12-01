@@ -1,6 +1,6 @@
 function FK = FK_test(q_,x)
 
-    d1 = x(1); d2 = x(2); d3 = x(3); d4 = 0; tool = 0.1;
+    d1 = x(1); d2 = x(2); d3 = x(3); d4 = 0; tool = 0;
     a1 = 0; a2 = 0; a3 = 0; a4 = x(4);
 
     q = @(n)q_(n+1);

@@ -27,8 +27,8 @@ function [theta,f] = IK(a, pose_des, initial_q)
     
     for k = 1:input.n_arms
         IK_cost = @(Q)IK_cost_(Q,k);
-        [temp, ~] = simulannealbnd(IK_cost,initial_q(7*(k-1) + 1:7*k),cons_l,cons_u,options_sa);
-        [temp, f_] = fmincon(IK_cost, temp, A_, [b(1:7) b(15:21)], [], [], [], [], [], options);
+%         [temp, ~] = simulannealbnd(IK_cost,initial_q(7*(k-1) + 1:7*k),cons_l,cons_u,options_sa);
+        [temp, f_] = fmincon(IK_cost, initial_q(7*(k-1) + 1:7*k), A_, [b(1:7) b(15:21)], [], [], [], [], [], options);
         f = f + f_;
         theta_optim(7*(k-1) + 1:7*k) = temp;
     end

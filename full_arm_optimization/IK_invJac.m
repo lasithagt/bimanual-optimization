@@ -2,7 +2,7 @@
 function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d) 
 
     global input
-    iter_max = 100;
+    iter_max = 500;
     pa = FK(x, curr_q);
     pd = new_cart_pose;
     
@@ -30,7 +30,7 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             iter = iter + 1;
             e_p = (curr_p(1:3,end,i) - pd(1:3,end,i));
             e_o = [1 0 0 0]' - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i)))';
-            e_o = [0 0 0 0]';
+%             e_o = [0 0 0 0]';
             % TODO: solve for q_dot that gives more manipulability.
             
             % check for singularities and adds dampening if so.
@@ -51,7 +51,7 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             q_ret(i,:) = q_new;
             curr_p  = FK(x, q_ret);
             err_n = sqrt(sum((pd(1:3,end,i) - curr_p(1:3,end,i)).^2) + ...
-                            0*sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
+                            sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
             err_rel = abs(err_n - err)./err;
             err = err_n;
             
@@ -67,6 +67,6 @@ end
 function q = redundancy_optimizer(in, q)
 % to stay away from joint limits.
 
-%         q_lim_grad = exp((q - input.q_min)) + exp((q - input.q_max))
-%         q0 = null(J) * q_lim_grad
+        q_lim_grad = exp((q - input.q_min)) + exp((q - input.q_max))
+        q0 = null(J) * q_lim_grad
 end

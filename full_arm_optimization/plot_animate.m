@@ -6,7 +6,7 @@ function plot_animate(x, input, data_file)
     % define the dual arm robot
     alpha  = [pi/2 -pi/2 -pi/2 0 pi/2 -pi/2 0];
     offset = [0,0,0,-pi/2,0,-pi/2,0];
-    d      = [x(5) x(6) x(7) 0 0 0 0];
+    d      = [0*x(5) 0*x(8) x(7) 0 0 0];
     a      = [0 0 0 x(8) 0 0 0];
     tool   = input.tool;
 
@@ -18,13 +18,11 @@ function plot_animate(x, input, data_file)
     L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset', offset(6));
     L7 = Link('d', tool, 'a',    0, 'alpha', alpha(7),'offset', offset(7));
     
-    m             = 60;
+    m             = 120;
     q_min         = input.q_min;
     q_max         = input.q_max;
     des_poses     = trajectory_pose_read(data_file, m);
-%     p_1 = eye(4); p_1(1:3,1:3) = rotx(pi); p_1(1:3,end) = [-0 -7 0];
-%     des_poses(:,:,1,1) = p_1;
-%     des_poses(:,:,1,2) = p_1;
+
     pd  = des_poses(:,:,:,:);
 
 %     m   = 120;
@@ -41,28 +39,32 @@ function plot_animate(x, input, data_file)
     theta   = zeros(input.n_arms * input.n_links, m);
 
     anim_pos = [];
+        
+
     
-    initial_q      = [0 0 0 0 0 0 0 0 0 0 0 0 0 0];
-    [temp_init, f] = IK(x, pd(:,:,1,:), initial_q);
-    theta(:,1)     = reshape(temp_init,[],1);
-    pa(:,:,1,:)    = FK(x, temp_init');
-    vel_d          = [0 0 0 0 0 0]';
-    temp_t         = temp_init';
-    anim_pos(:,:,1,1) = input.T_L*mini_chain_1.A(1:7,temp_t(1,:)).T;
-    anim_pos(:,:,1,2) = input.T_R*mini_chain_2.A(1:7,temp_t(2,:)).T;
+%     err_v = [];
+    T = zeros(4,4,2); T(:,:,1) = input.T_L; T(:,:,2) = input.T_R;
+    for k = 1:input.n_arms
+        rb                                  = FK_exp(x(5:end), T(:,:,k));
+        [temp_t]                            = IK_SE3(rb, pd(:,:,:,k));
+        theta(input.n_links*(k-1)+1:input.n_links*k,:)  = temp_t;
+        pa(:,:,:,k)                         = fkine(rb, theta(input.n_links*(k-1)+1:input.n_links*k,:));
+    end
     
-    % pd_(:,:,2) = eye(4); pd_(1:3,end,1) = [-4,-5,0]; pd_(1:3,end,2) = [-4,-5,0];
-    % [t_,f]     = IK(x, pd_, initial_q, q_min, q_max, input);
-    
-    err_v = [];
-    for j = 1:m-1
-       [temp_t, err] =  IK_invJac(x, temp_t, pd(:,:,1+j,:), vel_d);
-       err_v(j) = err;
-       theta(:,j+1)  =  reshape(temp_t',[],1);
-       pa(:,:,j+1,:) =  FK(x, temp_t);
-       anim_pos(:,:,j+1,1) = input.T_L*mini_chain_1.A(1:7,temp_t(1,:)).T;
-       anim_pos(:,:,j+1,2) = input.T_R*mini_chain_2.A(1:7,temp_t(2,:)).T;
+    for j = 1:m
+%        [temp_t, err] =  IK_invJac(x, temp_t, pd(:,:,1+j,:), vel_d);
+              
+%        err_v(j) = err;
+%        theta(:,j+1)  =  reshape(temp_t',[],1);
+%        pa(:,:,j+1,:) =  FK(x, temp_t);
+%        anim_pos(:,:,j+1,1) = input.T_L*mini_chain_1.A(1:7,temp_t(1,:)).T;
+%        anim_pos(:,:,j+1,2) = input.T_R*mini_chain_2.A(1:7,temp_t(2,:)).T;
+       anim_pos(:,:,j,1) = input.T_L*mini_chain_1.A(1:7,theta(1:7,j)).T;
+       anim_pos(:,:,j,2) = input.T_R*mini_chain_2.A(1:7,theta(8:end,j)).T;
     end 
+    
+    
+    
     q_L = theta(1:7,:);
     q_R = theta(8:end,:);
     

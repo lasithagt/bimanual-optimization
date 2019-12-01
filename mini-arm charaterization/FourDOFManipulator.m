@@ -39,24 +39,32 @@ alpha = [-pi/2 pi/2 -pi/2 pi/2 -pi/2 pi/2 0];
 d     = phi([1 3 5 7 9 11 13]);
 a     = phi([2 4 6 8 10 12 14]);
 
-L1 = Link('d', d(1), 'a', a(1), 'alpha', alpha(1));        
-L2 = Link('d', d(2), 'a', a(2), 'alpha', alpha(2),'offset',0);
-L3 = Link('d', d(3), 'a', a(3), 'alpha', alpha(3));
-L4 = Link('d', d(4), 'a', a(4), 'alpha', alpha(4),'offset',0);
-L5 = Link('d', d(5), 'a', a(5), 'alpha', alpha(5),'offset',0);
-L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset',0);
-L7 = Link('d', d(7), 'a', a(7), 'alpha', alpha(7),'offset',0);
+% L1 = Link('d', d(1), 'a', a(1), 'alpha', alpha(1));        
+% L2 = Link('d', d(2), 'a', a(2), 'alpha', alpha(2),'offset',0);
+% L3 = Link('d', d(3), 'a', a(3), 'alpha', alpha(3));
+% L4 = Link('d', d(4), 'a', a(4), 'alpha', alpha(4),'offset',0);
+% L5 = Link('d', d(5), 'a', a(5), 'alpha', alpha(5),'offset',0);
+% L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset',0);
+% L7 = Link('d', d(7), 'a', a(7), 'alpha', alpha(7),'offset',0);
+
+L1 = Link('d', 0.2, 'a', 0, 'alpha', pi/2);        
+L2 = Link('d', 0, 'a', 0, 'alpha', -pi/2,'offset',0);
+L3 = Link('d', 0.2, 'a', 0, 'alpha', -pi/2);
+L4 = Link('d', 0, 'a', 0.2, 'alpha', 0,'offset',-pi/2);
+L5 = Link('d', 0, 'a', 0, 'alpha', pi/2,'offset',0);
+L6 = Link('d', 0, 'a', 0, 'alpha', -pi/2,'offset',-pi/2);
+L7 = Link('d', 0.2, 'a',0, 'alpha', 0,'offset',0);
 
 % Display the current manipulator.
 l = 0.05;
 T_base_1 = SE3.Ry(pi/2);
 T_base_2 = SE3.Ry(-pi/2)*SE3.Rz(-pi);
-T_base_1.t = [l;-0.6;0];
-T_base_2.t = [-l;-0.6;0];
+T_base_1.t = [l;0.6;0];
+T_base_2.t = [-l;0.6;0];
 
 
-mini_chain_1 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_R','base', T_base_1);
-mini_chain_2 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_L','base', T_base_2);
+mini_chain_1 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_L','base', T_base_1);
+mini_chain_2 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_R','base', T_base_2);
 
 % Transform the coordinates
 % Conversion to the coordinate system.
@@ -77,7 +85,7 @@ CoM(:,2) = CoM(:,2) + [0 0 0.1245]';
 
 %% Compute the trajectory
 q0 = [0 0 0 0 0 0 0];
-qf = [pi/2 pi/4 pi/3 pi/4 0 0 0];
+qf = [pi/2 pi/4 pi/3 pi/4 pi/4 pi/4 pi/4];
 
 % q0 = [0 pi/8 0 0 0 0 0]; 
 % % qf = [pi/2 pi/4 pi/3 -pi/2];
@@ -134,13 +142,15 @@ figure(2)
 % set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
 % hold on
 for i = 1:size(q,1)
-    mini_chain_1.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[0 60],'tile1color',[10 1 1],'delay',0.0001)
+    mini_chain_1.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[180 40],'tile1color',[10 1 1],'delay',0.0001)
     hold on
     q(i,1) = -q(i,1);
     q(i,3) = -q(i,3);
-    q(i,5) = -q(i,5);
+%     q(i,5) = -q(i,5);
+    q(i,6) = -q(i,6);
     q(i,7) = -q(i,7);
-    mini_chain_2.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[0 60],'tile1color',[10 1 1],'delay',0.0001)
+%     q(i,:) = -q(i,:);
+    mini_chain_2.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[180 40],'tile1color',[10 1 1],'delay',0.0001)
 end
 
 
