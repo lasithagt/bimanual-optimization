@@ -71,7 +71,7 @@ func_vec     = @(X)cost_function_vec(X, input);
 init_a   = [4.7875  -12.3765    1.0806    1.3030    1.6627    2.9388    3.8017    4.9553];
 
 %% Constraints for physical feasibility 
-a_min    = [3 -15 0.0 0.0 0 0 0 0.1];
+a_min    = [1 -15 0.0 0.0 0 0 0 0.1];
 a_max    = [6 -10 pi/2 pi/2 2 6 6 5];
 A        = [eye(d_var); -eye(d_var)];
 b        = [a_max'; a_min'];
@@ -86,19 +86,19 @@ DebugLevel = 1;
 % define a function in SA to generate samples
 rng default
 options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',100);
-optim_X     = simulannealbnd(func_INVSE3,init_a,a_min,a_max,options_sa)
+optim_X     = simulannealbnd(func_INVSE3,init_a,a_min,a_max,options_sa);
 % optim_X = init_a;
-
-% cost_function_dual_INVJAC(optim_X)
 
 save('robot.mat','input');
 input = update_input_struct(optim_X, input);
 
+% animate the results.
 plot_animate(optim_X, input, data_file);
 
+% optimization for dexterity while maintaining the positional constraints. 
 t_init = [0.5;0.5;0.5;0.5];
+lq     = [theta(:)', optim_X];
 
-lq = [theta(:)', optim_X];
 % J  = J_(lq);
 % v  = pinv(J(1:2,1:4)') * t_init;
 % x  = [lq v'];
@@ -111,7 +111,7 @@ fk_uu_pos           = fk_uu;
 ind_p               = [];
 
 
-%% Matrix Computation (formulation as a quadratic problem
+%% Matrix Computation (formulation as a quadratic problem)
 % Matrix with partials
 
 % A_fwk = squeeze(2.*tmprod(fk_uu, func_vec(lq)', 1)) + 2.*tmprod(fk_u', fk_u', 2);

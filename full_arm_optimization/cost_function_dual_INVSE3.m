@@ -35,7 +35,7 @@ function F = cost_function_dual_INVSE3(x)
         [temp_t]                            = IK_SE3(rb, pd(:,:,:,k));
         theta(n_links*(k-1)+1:n_links*k,:)  = temp_t;
         pa(:,:,:,k)                         = fkine(rb, theta(n_links*(k-1)+1:n_links*k,:));
-%         
+         
 
         % Error on Position and Orientation 
 

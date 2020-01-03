@@ -22,10 +22,10 @@ nbDOFs = 4; %Nb of degrees of freedom
 armLength = 4; % Links length
 
 % Robot
-L1 = Link('d', 0, 'a', armLength, 'alpha', 0);
+L1    = Link('d', 0, 'a', armLength, 'alpha', 0);
 robot = SerialLink(repmat(L1,nbDOFs,1));
-q = sym('q', [1 nbDOFs]);	% Symbolic robot joints
-J = robot.jacob0(q'); % Symbolic Jacobian
+q     = sym('q', [1 nbDOFs]);	% Symbolic robot joints
+J     = robot.jacob0(q'); % Symbolic Jacobian
 
 % Define the desired manipulability
 q_Me_d = [pi/16 ; pi/4 ; pi/8 ; -pi/8]; % task 1
@@ -33,10 +33,11 @@ q_Me_d = [pi/16 ; pi/4 ; pi/8 ; -pi/8]; % task 1
 
 J_Me_d = robot.jacob0(q_Me_d); % Current Jacobian
 J_Me_d = J_Me_d(1:2,:);
-Me_d = (J_Me_d*J_Me_d');
+Me_d   = (J_Me_d*J_Me_d');
 [v_,e] = eig(Me_d);
-e_avg = sum(mean(e)); % get the mean value of eigen values
-Me_d  = v_*e_avg/v_;
+e_avg  = sum(mean(e)); % get the mean value of eigen values
+Me_d   = v_*e_avg/v_;
+
 %% Testing Manipulability Transfer
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Initial conditions
