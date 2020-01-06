@@ -9,17 +9,16 @@ function [q_ret] = IK_SE3(rb, new_cart_pose)
     guess = zeros(7,1) + 0.1*rand(7,1);
     
     n = size(p,3);
-    % test
-    theta_hat  = ikine(rb, twistcoords(logm(p(:,:,1))), guess);
-%     q_ret(:,1) = theta_hat;
+    %     theta_hat  = ikine(rb, twistcoords(logm(p(:,:,1))), guess);
+    %     q_ret(:,1) = theta_hat;
     q_ret = zeros(7,n);
+    
     for i=1:n
         p_         = twistcoords(logm(p(:,:,i)));
-%         p;
         theta_hat  = ikine(rb, p_, guess);
-%                 theta_hat = ikine2(rb, p_, guess);
         q_ret(:,i) = theta_hat;
         guess      = theta_hat;
+
     end
     
 end

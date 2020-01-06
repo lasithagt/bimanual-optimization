@@ -2,7 +2,11 @@
 function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d) 
 
     global input
+<<<<<<< HEAD
     iter_max = 500;
+=======
+    iter_max = 200;
+>>>>>>> 73d206558965c0208258dff79ab1c26d76381896
     pa = FK(x, curr_q);
     pd = new_cart_pose;
     
@@ -10,7 +14,7 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
     v_o = vel_d(4:end);
     
     % make it changable 
-    Ko = 0.7; Kp = -2.7;
+    Ko = 0.7; Kp = -3.0;
     q_ret = zeros(input.n_arms,input.n_links);
     
     % for the dual arm, coordinate frames are rotated.
@@ -22,16 +26,20 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
     
     for i = 1:input.n_arms
         curr_p  = pa;
-        err     = 100; %;norm(pa(:,:,i) - pd(:,:,i)).^2;
-        err_rel = 100; %norm(pa(:,:,i) - pd(:,:,i)).^2;
+        err     = 100; 
+        err_rel = 100; 
         q_new   = curr_q(i,:)';
         iter = 0;
+        
         while(err_rel > 1e-5 && err > 1e-8 && iter<=iter_max)
             iter = iter + 1;
             e_p = (curr_p(1:3,end,i) - pd(1:3,end,i));
             e_o = [1 0 0 0]' - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i)))';
+<<<<<<< HEAD
 %             e_o = [0 0 0 0]';
             % TODO: solve for q_dot that gives more manipulability.
+=======
+>>>>>>> 73d206558965c0208258dff79ab1c26d76381896
             
             % check for singularities and adds dampening if so.
             R  = T(1:3,1:3,i);
@@ -39,19 +47,31 @@ function [q_ret,err] = IK_invJac(x, curr_q, new_cart_pose, vel_d)
             J  = RR * Jacob(curr_q(i,:), x(5:end));
             
             % dealing with singularities
-            if (rcond(J*J') < 0.001) 
-                J_m = J'/(J*J' + 0.001 * eye(6)) ;
+            if (rcond(J*J') < 0.01) 
+                J_m = J'/(J*J' + 0.01 * eye(6)) ;
             else
                 J_m = J'/(J*J');
             end
             
-            % use psudo inverse for now. 
-            qdot    = J_m * [(v_p + Kp * e_p);(v_o + Ko * e_o(2:end))];
-            q_new   = q_new + qdot * 0.001;
+            % psudo inverse. 
+            qdot       = J_m * [(v_p + Kp * e_p);(v_o + Ko * e_o(2:end))] + redundancy_optimizer(input, J, q_new);
+            q_new      = q_new + qdot * 0.001;
             q_ret(i,:) = q_new;
+<<<<<<< HEAD
             curr_p  = FK(x, q_ret);
             err_n = sqrt(sum((pd(1:3,end,i) - curr_p(1:3,end,i)).^2) + ...
                             sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
+=======
+            curr_p     = FK(x, q_ret);
+            err_n      = sqrt(sum((pd(1:3,end,i) - curr_p(1:3,end,i)).^2) + ...
+                            1.4*sum(([1 0 0 0] - quatmultiply(quatconj(rotm2quat(pd(1:3,1:3,i))), rotm2quat(curr_p(1:3,1:3,i))))).^2);
+            
+            % exit if error begins to be incremental
+            if (err_n > err)
+                break;
+            end
+            
+>>>>>>> 73d206558965c0208258dff79ab1c26d76381896
             err_rel = abs(err_n - err)./err;
             err = err_n;
             
@@ -64,9 +84,34 @@ end
 
 %% TODO: optimizes the null space to increase the manipulability and stay
 % away from joint limits
-function q = redundancy_optimizer(in, q)
-% to stay away from joint limits.
+function q0 = redundancy_optimizer(input, J, q)
+    % to stay away from joint limits.
+    k = 0.1;
+    q_mid       = (input.q_min + input.q_max)./2;
+    
+    % w           = -(1/2*input.n_links) * sum((q - q_mid)./(input.q_max - input.q_min)).^2;
+    
+    q_lim_grad  = -(1/input.n_links) * ((q' - q_mid)./(input.q_max - input.q_min));
+    q0          = (eye(7)-J'/(J*J')*J) * k * q_lim_grad';
+    
+    % TODO:
+    % to maximize the manipulability measure
+    
+    
+    % to avoid self collisions
+end
 
+%% 
+function dis_collision()
+
+end
+
+
+
+
+<<<<<<< HEAD
         q_lim_grad = exp((q - input.q_min)) + exp((q - input.q_max))
         q0 = null(J) * q_lim_grad
 end
+=======
+>>>>>>> 73d206558965c0208258dff79ab1c26d76381896

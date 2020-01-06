@@ -9,9 +9,10 @@ function [q_ret] = IK_SE3(Slist, M, new_cart_pose)
     n = size(p,3);
     
     q_ret = zeros(7,n);
-    eomg = 0.01; ev = 0.01;
+    eomg = 0.01; ev = 0.001;
     
     for i=1:n
+        
         T          = p(:,:,i);
         theta_hat  = IKinSpace_modified(Slist, M, T, guess, eomg, ev);
         q_ret(:,i) = theta_hat;

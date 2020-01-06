@@ -5,20 +5,19 @@ function plot_animate(x, input, data_file)
     
     % define twists
     w = {x(1:3),x(4:6),x(7:9)};
-    q = {x(10:12),x(13:15),x(16:18)};
-    [Slist, ~]  = manipulator_exp(w, q, eye(4));
-    for i=1:7
-        Slist(1:3,i) = Slist(1:3,i) ./ norm(Slist(1:3,i));
+    for i =1:3
+       w{i} = w{i} ./ norm(w{i});
     end
     
-%     Slist(1:3,:) = normalize(Slist(1:3,:), 'norm' ,1)
+    q = {x(10:12),x(13:15),x(16:18)};
+    [Slist, ~]  = manipulator_exp(w, q, eye(4));
+    Slist(:,8)  = Slist(:,7);
+    DH_         = POE2DH(Slist);
     
-    DH_          = POE2DH(Slist);
-    
-    DH           = DH_(1:end-1,:);
+    DH          = DH_(2:end-1,:);
     
     alpha  = DH(:,3);
-    offset = zeros(7,1);
+    offset = DH(:,1);
     d      = DH(:,2);
     a      = DH(:,4);
     tool   = input.tool;
@@ -38,7 +37,7 @@ function plot_animate(x, input, data_file)
     L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset', offset(6));
     L7 = Link('d', tool, 'a',    0, 'alpha', alpha(7),'offset', offset(7));
     
-    m = 120;
+    m = 100;
     input.m       = m;
     q_min         = input.q_min;
     q_max         = input.q_max;
@@ -53,23 +52,25 @@ function plot_animate(x, input, data_file)
     T_base_1 = SE3(input.T_L);
     T_base_2 = SE3(input.T_R);
 
-    mini_chain_1 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_R','base', T_base_1);
-    mini_chain_2 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_L','base', T_base_2);
+    mini_chain_1 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_L','base', T_base_1);
+    mini_chain_2 = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'robot_R','base', T_base_2);
     
     theta   = zeros(input.n_arms * input.n_links, m);
 
     anim_pos = [];
         
     
-    %      err_v = [];
     T = zeros(4,4,2); T(:,:,1) = input.T_L; T(:,:,2) = input.T_R;
     for k = 1:input.n_arms
         [Slist, M]                          = manipulator_exp(w, q, T(:,:,k));                                  
         [temp_t]                            = IK_SE3(Slist, M, pd(:,:,:,k));
         theta(input.n_links*(k-1)+1:input.n_links*k,:)  = temp_t;
         pa(:,:,:,k)                         = FK_SE3(M, Slist, theta(input.n_links*(k-1)+1:input.n_links*k,:)); 
-           
+        
     end
+    V_se3(pd(:,:,:,1),pa(:,:,:,1))
+    V_se3(pd(:,:,:,2),pa(:,:,:,2))
+    
     
     for j = 1:m
        anim_pos(:,:,j,1) = input.T_L*mini_chain_1.A(1:7,theta(1:7,j)).T;
@@ -83,14 +84,14 @@ function plot_animate(x, input, data_file)
     
     % Plot both robots together
     fig = figure(1);
-    ws = [-20 20 -18 20 -10 20];
+    ws = [-20 20 -18 10 -10 20];
     myVideo = VideoWriter('myfile_test.avi');
     myVideo.FrameRate = 15;  % Default 30
     myVideo.Quality = 50;    % Default 75
     open(myVideo);
     for i = 1:m
         %  optim_arm_tool.vellipse([theta(:,i)'], '2d')
-        mini_chain_2.plot(q_R(:,i)', 'noshadow','workspace',ws,'noarrow', 'view',[-66 70],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1)
+         mini_chain_2.plot(q_R(:,i)', 'noshadow','workspace',ws,'noarrow', 'view',[-66 70],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1)
         hold on
         plot3(pa(1,end,i,2), pa(2,end,i,2), pa(3,end,i,2),'b.-');
         hold on
@@ -99,7 +100,7 @@ function plot_animate(x, input, data_file)
  
         hold on
         plot3(pa(1,end,i,1), pa(2,end,i,1), pa(3,end,i,1),'k.-');
-        
+        axis(ws)
         writeVideo(myVideo, getframe(fig))    
     end
     close(myVideo);

@@ -39,11 +39,11 @@ function F = cost_function_dual_INVSE3(x)
 
         % Error on Position and Orientation 
 
-%         for i = 1:m
-%             F = F + twistcoords(twistlog(fkine(rb, temp_t(:,i)))) - twistcoords(twistlog(pd(:,:,i,k)));
-%         end
-% 
-%         sum((pd(1:3,end,:,k) - pa(1:3,end,:,k)).^2,3)
+        %         for i = 1:m
+        %             F = F + twistcoords(twistlog(fkine(rb, temp_t(:,i)))) - twistcoords(twistlog(pd(:,:,i,k)));
+        %         end
+        % 
+        %         sum((pd(1:3,end,:,k) - pa(1:3,end,:,k)).^2,3)
 
         err_rel         = sum(sum((theta(:,1:end-1) - theta(:,2:end)).^2,2));
         for i = 1:m

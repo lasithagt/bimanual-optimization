@@ -1,6 +1,6 @@
-clear;
+% clear;
 close all;
-clear all;
+% clear all;
 
 %% This script implements the implementation in 
 % "Joint Optimization of Robot Design and Motion Parameters using the
@@ -18,13 +18,16 @@ global input
 
 
 %% Data Structure Generation
-m       = 5;     % Number of discrete points along trajectory
-n_links = 7;     % Number of revolute joints
+
+m       = 5;      % Number of discrete points along trajectory
+n_links = 7;      % Number of revolute joints
 d_var   = 8;
 n_arms  = 2;
 
 % get desired trajectory poses to optimize for
 data_file = 'Data/name_writing_sticky_note.mat';
+
+% data_file = 'Data/name_writing.mat';
 des_poses = trajectory_pose_read(data_file, m);
 
 % create dummy data points for testing
@@ -50,6 +53,8 @@ T_R(1:3,1:3) = roty(-pi/2)*rotx(-1*pi/4);
 T_R(1:3,end) = [3;-12;2];
 T_L(1:3,1:3) = roty(pi/2)*rotx(-1*pi/4);
 T_L(1:3,end) = [-3;-12;2];
+% T_R(1:3,end) = [0.5;-12;3];
+% T_L(1:3,end) = [-0.5;-12;3];
 
 input.T_L = T_L;
 input.T_R = T_R;
@@ -66,33 +71,50 @@ input.curr_q = zeros(n_links, m, n_arms);
 func         = @(X)cost_function_dual(X, input);
 func_INVJAC  = @(X)cost_function_dual_INVJAC(X);
 func_INVSE3  = @(X)cost_function_dual_INVSE3(X);
+func_INVSE3_MR  = @(X)cost_function_dual_INVSE3_MR(X);
 func_vec     = @(X)cost_function_vec(X, input);
 
-init_a   = [4.7875  -12.3765    1.0806    1.3030    1.6627    2.9388    3.8017    4.9553];
 
 %% Constraints for physical feasibility 
-a_min    = [1 -15 0.0 0.0 0 0 0 0.1];
-a_max    = [6 -10 pi/2 pi/2 2 6 6 5];
+
+init_a   = [2.4354  -10.2294    0.7530    1.4584    1.4269         0    4.1412    3.9466]; 
+% % Constraints for physical feasibility 
+a_min    = [0 -15 0.0 0.0 0 0 0 0.1];
+a_max    = [5 -10 pi/2 pi/2 2 0 6 6];
 A        = [eye(d_var); -eye(d_var)];
 b        = [a_max'; a_min'];
 global DebugLevel;
 DebugLevel = 1;
 
 % use fmincon or sa to solve to get a prior solution for the design
-% % % parameters
+
+%% Constrained Optimization
 % options_cp  = optimoptions('fmincon','Display','iter','Algorithm','sqp');
 % optim_X  = fmincon(func_INVSE3, init_a, A, b,[],[],[],[],[],options_cp)
 
+%% Simulated Annealing
 % define a function in SA to generate samples
 rng default
-options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',100);
-optim_X     = simulannealbnd(func_INVSE3,init_a,a_min,a_max,options_sa);
+options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',10,'MaxIterations',30);
+optim_X     = simulannealbnd(func_INVSE3_MR,init_a,a_min,a_max,options_sa);
 % optim_X = init_a;
 
 save('robot.mat','input');
-input = update_input_struct(optim_X, input);
+% input = update_input_struct(optim_X, input);
+% options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',200);
+% optim_X     = simulannealbnd(func_INVJAC,init_a,a_min,a_max,options_sa)
+
+% %% Genetic Algorithm
+% rng default % For reproducibility
+% options_ga = optimoptions('ga','ConstraintTolerance',1e-6,'PlotFcn', @gaplotbestf);
+% optim_X    = ga(func_INVJAC, 8, [], [], [], [], a_min, a_max, [], options_ga);
+
+% cost_function_dual_INVJAC(optim_X)
+
+save('Data/robot_temp.mat','input');
 
 % animate the results.
+input = update_input_struct(optim_X, input);
 plot_animate(optim_X, input, data_file);
 
 % optimization for dexterity while maintaining the positional constraints. 

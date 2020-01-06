@@ -8,7 +8,7 @@ function [Slist, M1] = manipulator_exp(w, q, g_st)
     % d2 = x(3); d3 = x(3) + x(4);
     Q = g_st(1:3,end);
     R = g_st(1:3,1:3);
-    W = g_st(1:3,1:3) * [0 0 1]';
+    W = R * [0 0 1]';
     
     w1 = W; q1 = Q; % this axis is not changing
     w2 = R * [0;-1;0]; q2 = Q + R * [0;0;d1];

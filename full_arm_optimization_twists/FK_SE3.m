@@ -8,7 +8,7 @@ function [pose_K] = FK_SE3(Slist, M, q)
     
     theta  = q;
     pose_K = zeros(4,4,size(theta,2));
-    m = input.m;
+    m = size(q,2);
     for i=1:m
         pose_K(:,:,i)  = FKinSpace(Slist, M, theta(:,i));
     end

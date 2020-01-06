@@ -19,17 +19,14 @@ function plot_animate(x, input, data_file)
     L7 = Link('d', tool, 'a',    0, 'alpha', alpha(7),'offset', offset(7));
     
     m             = 120;
+
     q_min         = input.q_min;
     q_max         = input.q_max;
     des_poses     = trajectory_pose_read(data_file, m);
 
     pd  = des_poses(:,:,:,:);
 
-%     m   = 120;
-%     pd(1:3,1:3,1,1) = rotx(pi)*pd(1:3,1:3,1,1);
-%     pd(1:3,1:3,1,2) = rotx(pi)*pd(1:3,1:3,1,2);
     % Display the current manipulator.
-
     T_base_1 = SE3(input.T_L);
     T_base_2 = SE3(input.T_R);
 
@@ -39,10 +36,7 @@ function plot_animate(x, input, data_file)
     theta   = zeros(input.n_arms * input.n_links, m);
 
     anim_pos = [];
-        
-
     
-%     err_v = [];
     T = zeros(4,4,2); T(:,:,1) = input.T_L; T(:,:,2) = input.T_R;
     for k = 1:input.n_arms
         rb                                  = FK_exp(x(5:end), T(:,:,k));
@@ -52,18 +46,9 @@ function plot_animate(x, input, data_file)
     end
     
     for j = 1:m
-%        [temp_t, err] =  IK_invJac(x, temp_t, pd(:,:,1+j,:), vel_d);
-              
-%        err_v(j) = err;
-%        theta(:,j+1)  =  reshape(temp_t',[],1);
-%        pa(:,:,j+1,:) =  FK(x, temp_t);
-%        anim_pos(:,:,j+1,1) = input.T_L*mini_chain_1.A(1:7,temp_t(1,:)).T;
-%        anim_pos(:,:,j+1,2) = input.T_R*mini_chain_2.A(1:7,temp_t(2,:)).T;
        anim_pos(:,:,j,1) = input.T_L*mini_chain_1.A(1:7,theta(1:7,j)).T;
        anim_pos(:,:,j,2) = input.T_R*mini_chain_2.A(1:7,theta(8:end,j)).T;
-    end 
-    
-    
+    end
     
     q_L = theta(1:7,:);
     q_R = theta(8:end,:);
@@ -71,7 +56,7 @@ function plot_animate(x, input, data_file)
     % Plot both robots together
     fig = figure(1);
     ws = [-8 8 -18 5 -4 7];
-    myVideo = VideoWriter('myfile.avi');
+    myVideo = VideoWriter('Videos/myfile.avi');
     myVideo.FrameRate = 15;  % Default 30
     myVideo.Quality = 50;    % Default 75
     open(myVideo);

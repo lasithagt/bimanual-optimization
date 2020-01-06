@@ -24,22 +24,7 @@ function rb = FK_exp(x, g_st)
     l6 = createtwist(w6, q6);
     l7 = createtwist(w7, q7);
     
-%     drawtwisttraj({l1, l2, l3, l4, l5, l6, l7},[0 0 0 0 0 0 0])
-
     M1 = g_st * [0 1 0 0;-1 0 0 0;0 0 1 d3;0 0 0 1];
     rb = robot({l1, l2, l3, l4, l5, l6, l7}, M1);
     
-%     hn = fkine(rn,q)
-%     guess = zeros(7,1) + 0.1*rand(7,1);
-%     pose = eye(4);
-%     pose(3,4) = 10;
-%     theta_hat  = ikine(rn, pose, guess)
-% %     theta_hat = ikine2(rn, hn, guess)
-%     hn_ = fkine(rn,theta_hat);
-% %   
-%     x = [0,0,0.5,0.5];
-%     FK_test(q,x)
-%     if (isequalf(FK_test(q,x),hn,1e-3))
-%         fprintf(' correct solution found\n')
-%     end
 end
