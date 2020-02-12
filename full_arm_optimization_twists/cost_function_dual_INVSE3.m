@@ -38,11 +38,10 @@ function F = cost_function_dual_INVSE3(x)
         theta(n_links*(k-1)+1:n_links*k,:)  = temp_t;
         pa(:,:,:,k)                         = FK_SE3(M, Slist, theta(n_links*(k-1)+1:n_links*k,:)); 
            
-        
         V       = V_se3(pd,pa);
         
         err_rel = sum(sum((theta(:,1:end-1) - theta(:,2:end)).^2,2));
-%         dex     = dex(JacobianSpace(Slist, theta(n_links*(k-1)+1:n_links*k,:));
+        % dex   = dex(JacobianSpace(Slist, theta(n_links*(k-1)+1:n_links*k,:));
         f_val   = f_val + norm(V) + 0.1*err_rel;  
     end
        

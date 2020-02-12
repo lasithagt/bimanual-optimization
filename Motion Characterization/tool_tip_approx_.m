@@ -1,9 +1,10 @@
-function  [x,fval]=tool_tip_approx_(data)
+function  [x,fval]=tool_tip_approx_(data,i)
     data_xyz = data(:,1:3);
     data_aer = data(:,4:6);
     
-    num_points = size(data_xyz,1);   
-    figure(1)
+    num_points = size(data_xyz,1);  
+    
+    figure(i)
     plot3(data_xyz(:,1),data_xyz(:,2),data_xyz(:,3))
     
 %     options = optimset('MaxFunEvals',100000,'Display','iter');

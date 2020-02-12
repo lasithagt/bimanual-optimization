@@ -37,10 +37,10 @@ function [Slist, M1] = manipulator_exp(w, q, g_st)
     
     % M1 =  g_st * [0 1 0 0;-1 0 0 0;0 0 1 d3;0 0 0 1];
     Slist  = [S1 S2 S3 S4 S5 S6 S7];
-%     M_R    = R * rotx(pi/2) * w5;
-%     M_R    = Normalize(M_R);
+    %     M_R    = R * rotx(pi/2) * w5;
+    %     M_R    = Normalize(M_R);
+    %     M_R    = ProjectToSO3(MatrixLog3(VecToso3(M_R')));
     
-%     M_R    = ProjectToSO3(MatrixLog3(VecToso3(M_R')));
     M_R = eye(3);
     M      = RpToTrans(M_R, q{3}');
     M1     = g_st * M;

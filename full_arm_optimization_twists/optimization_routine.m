@@ -15,7 +15,7 @@ d_var   = 8;
 n_arms  = 2;
 
 % get desired trajectory poses to optimize for
-data_file = 'Data/name_writing_sticky_note.mat';
+data_file = 'Data/path_tracking_new_pp.mat';
 des_poses = trajectory_pose_read(data_file, m);
 
 % create dummy data points for testing
@@ -37,9 +37,9 @@ input.q_max   = q_max;
 T_L = eye(4);
 T_R = eye(4);
 
-T_R(1:3,1:3) = roty(-pi/2)*rotx(-1*pi/4);
+T_R(1:3,1:3) = roty(-pi/2)*rotx(-0*pi/4);
 T_R(1:3,end) = [10;-12;2];
-T_L(1:3,1:3) = roty(pi/2)*rotx(-1*pi/4);
+T_L(1:3,1:3) = roty(pi/2)*rotx(-0*pi/4);
 T_L(1:3,end) = [-10;-12;2];
 
 input.T_L = T_L;
@@ -69,12 +69,14 @@ init_a =  [-0.590711803586636, 0.849801739227642, 0.098539770795573, -0.39452871
    2.379801527475640, 1.867896703390760, 2.406623292597008];
 % init_a   = [w,q];
 
-%% Constraints for physical feasibility 
-a_min    = -[ones(1,9) 3*ones(1,9)];
-a_max    = [ones(1,9) 3*ones(1,9)];
-A        = [eye(d_var); -eye(d_var)];
-b        = [a_max'; a_min'];
+init_a = [normalize([0.9592   -0.6942   -0.7847],'norm')   normalize([-0.8658    0.8027   -0.9455],'norm')   normalize([0.8874   -0.9945    0.7926],'norm')  ...
+    -1.1903 -0.6729    2.4949   -2.3451    1.8307    1.5839   -2.4630   -2.3927   -2.0306 4.7491 3.9444 -4.7350];
 
+%% Constraints for physical feasibility 
+a_min    = -[ones(1,9) 3*ones(1,9) 5*ones(1,3)];
+a_max    = [ones(1,9) 3*ones(1,9) 5*ones(1,3)];
+% A        = [eye(d_var); -eye(d_var)];
+% b        = [a_max'; a_min'];
 
 % use fmincon or sa to solve to get a prior solution for the design
 % % % parameters
@@ -85,7 +87,7 @@ b        = [a_max'; a_min'];
 rng default
 options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',100,'MaxIterations',100);
 % optim_X     = simulannealbnd(func_INVSE3,init_a,a_min,a_max,options_sa);
-% optim_X = init_a;
+optim_X = init_a;
 
 save('robot.mat','input');
 input = update_input_struct(optim_X, input);

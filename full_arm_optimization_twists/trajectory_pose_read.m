@@ -9,8 +9,9 @@ function poses = trajectory_pose_read(data_file, m)
     em_data_adj = em_data.em_data_adj;
 
     % convert to z pointing up and changing the position of the base
-    R_b =  rotz(pi/2)*rotx(pi)*rotz(pi) ;
-    p_b = [0, 10.15,0]';
+    R_b =  rotz(pi/2)*rotx(pi)*rotz(pi) ; %R{0_b}
+    % p_b = [0, 10.15, 0]';
+    p_b = [0, 0, 0]';
 
     em_data_new_b = zeros(size(em_data_adj));
     

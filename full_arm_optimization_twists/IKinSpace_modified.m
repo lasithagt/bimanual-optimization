@@ -45,7 +45,7 @@ function [thetalist, success] ...
 % success =
 %     1
 
-alpha = 10:-1:0;
+alpha = 1;
 thetalist = thetalist0;
 i = 0;
 maxiterations = 20;

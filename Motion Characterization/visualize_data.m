@@ -2,24 +2,28 @@
 close all;
 clear;
 
-%addpath('../npy-matlab/npy-matlab')
+% addpath('../npy-matlab/npy-matlab')
 
 % Load the data from a mat file
-calibration = 0;
+calibration = 1;
 if (calibration)
-    cali_data = readNPY('Data/calibration_data.npy');
-    ws_d      = rosbag('Data/2019-05-30-15-51-10.bag');
+    cali_data = readNPY('Data/EM_tracker/calibration_data_soldering.npy');
+    % ws_d      = rosbag('Data/2019-05-30-15-51-10.bag');
+    ws_d      = rosbag('Data/EM_tracker/soldering.bag');
+
 
     em_data = select(ws_d,'Topic','/EMdata');
-    msg_em = cell2mat(readMessages(em_data,'DataFormat','struct'));
-    em_ = vertcat(msg_em(1:end).Poses);
-    numsen = size(em_,2);
-    n_data = size(em_,1);
+    msg_em  = cell2mat(readMessages(em_data,'DataFormat','struct'));
+    em_     = vertcat(msg_em(1:end).Poses);
+    
+    % numsen  = size(em_,2);
+    numsen  = 2;
+    n_data  = size(em_,1);
 
     em_data_mat = zeros(7,size(em_,1),numsen);
 
     for i = 1:numsen
-        e_temp = vertcat(em_(:,i).Pose);
+        e_temp = vertcat(em_(:,i+1).Pose);
         e_temp_pos = vertcat(e_temp.Position);
         e_temp_ori = vertcat(e_temp.Orientation);
         em_data_mat(1,:,i) = horzcat(e_temp_pos.X);
@@ -51,21 +55,19 @@ if (calibration)
 
         ang_eul = sensor_i_data(4:end-1,:)';
         % compute the tool tip transformation matrix for all the instruments
-        [tool_tip_cal{i}, fval]  = tool_tip_approx_([pos_xyz ang_eul]);
+        [tool_tip_cal{i}, fval]  = tool_tip_approx_([pos_xyz ang_eul],i);
 
 
         fprintf("Calibration Tool %d error: %d\n",[i, fval])
         % Extract position and angular data and get the tool tip position
         em_data_mat_pos = em_data_mat(1:3,:,i)';
-    %     em_data_mat_ang = quat2eul(em_data_mat(4:end,:,i)');
+        % em_data_mat_ang = quat2eul(em_data_mat(4:end,:,i)');
         em_data_mat_ang = em_data_mat(4:end-1,:,i)';
 
         for k = 1:n_data
-
-            em_data_adj(1:3,k,i) = em_data_mat_pos(k,:)' + eul2rotm(em_data_mat_ang(k,:),'ZYX')*tool_tip_cal{i}(1:3)';
-            temp = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [1 0 0]';
+            em_data_adj(1:3,k,i)   = em_data_mat_pos(k,:)' + eul2rotm(em_data_mat_ang(k,:),'ZYX')*tool_tip_cal{i}(1:3)';
+            temp                   = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [1 0 0]';
             em_data_adj(4:end,k,i) = temp;
-
         end
         em_tracker_vel(1,:,i) = getDerivative(em_data_adj(1,:,i)',100.0);
         em_tracker_vel(2,:,i) = getDerivative(em_data_adj(2,:,i)',100.0);
@@ -75,24 +77,24 @@ if (calibration)
 
     save('EM_data.mat','em_data_adj', 'tool_tip_cal', 'em_tracker_vel')
 else 
-    load('EM_data_.mat')
+    load('EM_data.mat')
 end
 
 
 %% plotting
-figure(1)
+figure(3)
 % TODO: Extract force data at each point. (for visualization)
-close all;
+% close all;
 line = {'r-','k-'};
 q_ = {'r','b'};
-r = 700;
+r = 50;
 
 numsen = size(em_data_adj,3);
 n_data = size(em_data_adj,2);
 h1 = animatedline('Marker','.','Color','r');
 h2 = animatedline('Marker','.','Color','k');
 
-axis([0 25 -5 10 -10 10])
+
 xlabel('x position')
 ylabel('y position')
 zlabel('z position')
@@ -100,23 +102,24 @@ zlabel('z position')
 grid on
 h = [h1,h2];
 for j=1:n_data
-    j
+    j;
     for i=1:numsen
         if mod(j,r) == 0
             
 %             addpoints(h(i), em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i));
-            plot3(em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i),'*')
-%             quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
-%                 em_data_adj(4,j,i),em_data_adj(5,j,i),em_data_adj(6,j,i),q_{i},'LineWidth',2,'MaxHeadSize',0.5)
+            plot3(em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i),'.')
+            quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
+                -em_data_adj(4,j,i),-em_data_adj(5,j,i),-em_data_adj(6,j,i),q_{i}, 'LineWidth',0.5,'MaxHeadSize',0.05)
 % 
-%             % hold on
-            drawnow
-            pause(1)
+            hold on
+            %drawnow
+            axis([0 30 -10 10 -10 25])
+            pause(0.01)
         end
     end
 end
 
-figure(2)
+figure(4)
 % TODO: Extract force data at each point. (for visualization)
 % close all;
 

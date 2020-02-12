@@ -37,7 +37,7 @@ function plot_animate(x, input, data_file)
     L6 = Link('d', d(6), 'a', a(6), 'alpha', alpha(6),'offset', offset(6));
     L7 = Link('d', tool, 'a',    0, 'alpha', alpha(7),'offset', offset(7));
     
-    m = 100;
+    m = 300;
     input.m       = m;
     q_min         = input.q_min;
     q_max         = input.q_max;
@@ -89,17 +89,27 @@ function plot_animate(x, input, data_file)
     myVideo.FrameRate = 15;  % Default 30
     myVideo.Quality = 50;    % Default 75
     open(myVideo);
+    q_ = {'r','b'};
     for i = 1:m
         %  optim_arm_tool.vellipse([theta(:,i)'], '2d')
-         mini_chain_2.plot(q_R(:,i)', 'noshadow','workspace',ws,'noarrow', 'view',[-66 70],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1)
+%          mini_chain_2.plot(q_R(:,i)', 'noshadow','workspace',ws,'noarrow', 'view',[-66 70],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1)
         hold on
         plot3(pa(1,end,i,2), pa(2,end,i,2), pa(3,end,i,2),'b.-');
         hold on
         
-        mini_chain_1.plot(q_L(:,i)', 'noshadow','workspace',ws,'noarrow', 'view',[-66 70],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1)
- 
+%         mini_chain_1.plot(q_L(:,i)', 'noshadow','workspace',ws,'noarrow', 'view',[-66 70],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1)
+        R_2 = pa(1:3,1:3,i,2) * [0 0 -1]';
+        quiver3(pa(1,end,i,2), pa(2,end,i,2), pa(3,end,i,2), ...
+            R_2(1),R_2(2),R_2(3),q_{2}, 'LineWidth',0.8,'MaxHeadSize',0.1)
+        
         hold on
         plot3(pa(1,end,i,1), pa(2,end,i,1), pa(3,end,i,1),'k.-');
+         
+        hold on
+        R_1 = pa(1:3,1:3,i,1) * [0 0 -1]';
+        quiver3(pa(1,end,i,1), pa(2,end,i,1), pa(3,end,i,1), ...
+            R_1(1),R_1(2),R_1(3),q_{1}, 'LineWidth',0.8,'MaxHeadSize',0.1)
+% 
         axis(ws)
         writeVideo(myVideo, getframe(fig))    
     end

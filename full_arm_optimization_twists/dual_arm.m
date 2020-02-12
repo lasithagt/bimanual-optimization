@@ -45,8 +45,8 @@ w_L = [0,0,0]'; w_R = [0,0,0]';
 [V_L, V_R] = computeSpatialVel(v_L, w_L, v_R, w_R, FK_R, FK_L);
 
 
-T_d_R        = FK_R * T_delta_R
-T_d_L        = FK_L * T_delta_L
+T_d_R      = FK_R * T_delta_R
+T_d_L      = FK_L * T_delta_L
 
 
 % [thetalist, success] = IKinSpace(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R, T_d_L, q, eomg, ev);
