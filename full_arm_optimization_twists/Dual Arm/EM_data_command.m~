@@ -1,6 +1,6 @@
 clear; clc;
 %% Import EM data
-load('path_tracking.mat')
+load('name_writing.mat')
 %% Process EM data
 euler{1} = em_data_adj(4:end, :, 1);
 euler{2} = em_data_adj(4:end, :, 2);
@@ -26,7 +26,10 @@ end
 [ M_K, Slist_K, M_R, Slist_R, M_L, Slist_L] = dual_arm_twists();
 %% Compute the weights matrix
 global W
-
+W_KUKA = 1*eye(7);
+W_L    = eye(7);
+W_R    = eye(7);
+W      = blkdiag(W_KUKA,W_L,W_R);
 
 % J = [J_K_s Adjoint(g_K)*Jst_L zeros(6,7);J_K_s zeros(6,7) Adjoint(g_K)*Jst_R];
 %% Current configuration
@@ -34,23 +37,27 @@ theta_mini_L = 0*[0 0 pi/2 -2*pi/3 0 0 0]';
 theta_mini_R = 0*[-pi 0 -pi/2 -pi/3 0 0 0]';
 theta_KUKA   = [-pi/2 pi/4 0 pi/4 0 0 -pi/2]';
 q = [theta_KUKA;theta_mini_R;theta_mini_L];
-% q = [-2.8367 1.4123 1.6010 1.6141 0.7793 -2.1230 -1.1890 -0.5457 1.4920 -0.5339 -1.0568 -0.1776 3.9814 -0.2827 0.0433 0.8110 -0.1534 -2.4385 0.5045 1.9578 0.2526]';
 
+q = [-2.8367 1.4123 1.6010 1.6141 0.7793
+   -2.1230
+   -1.1890
+   -0.5457
+    1.4920
+   -0.5339
+   -1.0568
+   -0.1776
+    3.9814
+   -0.2827
+    0.0433
+    0.8110
+   -0.1534
+   -2.4385
+    0.5045
+    1.9578
+    0.2526
 %% Command script
 eomg = 1;
 ev = 0.0001;
-
-% find the global position with kuka abled.
-W = eye(21);
-[theta0,L,R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R(:,:,i), T_d_L(:,:,i), q, eomg, ev);
-q            = theta0;
-
-% redefine the matrix weights to be higher
-W_KUKA = 10*eye(7);
-W_L    = eye(7);
-W_R    = eye(7);
-W      = blkdiag(W_KUKA,W_L,W_R);
-
 % the delta that needs to move
 T_delta_R    = RpToTrans(eye(3),[0.0,0.0,0.05]');
 T_delta_L    = RpToTrans(eye(3),[0.03,0.0,0.05]');
@@ -58,8 +65,8 @@ T_delta_L    = RpToTrans(eye(3),[0.03,0.0,0.05]');
 % current positions
 FKinSpace(M_R, Slist_R, theta_mini_R);
 FK_K         = FKinSpace(M_K, Slist_K, theta_KUKA);
-FK_R         = FK_K * FKinSpace(M_R, Slist_R, theta_mini_R);
-FK_L         = FK_K * FKinSpace(M_L, Slist_L, theta_mini_L);
+FK_R         = FK_K * FKinSpace(M_R, Slist_R, theta_mini_R)
+FK_L         = FK_K * FKinSpace(M_L, Slist_L, theta_mini_L)
 
 % compute the spatial velocity from velocity
 v_L = [0,0,0]'; v_R = [0,0,0]';
@@ -75,7 +82,7 @@ y_right = zeros(1,length(T_d_R));
 y_left  = zeros(1,length(T_d_R));
 for i = 1:length(T_d_R)
 
-    q_store(:,i)    = q;
+    q_store(:,i) = q;
     [thetalist,L,R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R(:,:,i), T_d_L(:,:,i), q, eomg, ev);
     
     
