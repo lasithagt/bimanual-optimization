@@ -12,15 +12,15 @@ orientations{2} = zeros(3,3,length(em_data_adj));
 
 for i = 1:length(euler{1})
    for c = 1:2
-       orientations{c}(:,:,i) = eye(3); % eul2rotm(euler{c}(:,i)', 'ZYX');
+       orientations{c}(:,:,i) = eul2rotm(euler{c}(:,i)', 'ZYX'); % eye(3);
    end
 end
 
 T_d_R = zeros(4,4,length(euler{1}));
 T_d_L = zeros(4,4,length(euler{1}));
 for i = 1:length(orientations{1})
-   T_d_R(:,:,i) = RpToTrans(orientations{1}(:,:,i), xyz{1}(:,i));
-   T_d_L(:,:,i) = RpToTrans(orientations{2}(:,:,i), xyz{2}(:,i));
+   T_d_R(:,:,i) = RpToTrans(orientations{1}(:,:,i), xyz{1}(:,1));%Change to i to map actual data
+   T_d_L(:,:,i) = RpToTrans(orientations{2}(:,:,i), xyz{2}(:,1));
 end
 %% Manipulator twists
 [ M_K, Slist_K, M_R, Slist_R, M_L, Slist_L] = dual_arm_twists();
@@ -96,11 +96,12 @@ for i = 1:length(T_d_R)
     x_left(i) = FK_L(1,4);
     y_left(i) = FK_L(2,4);
     
+    rpy_R(:,i) = rotm2eul(FK_R(1:3,1:3), 'ZYX');
+    rpy_L(:,i) = rotm2eul(FK_L(1:3,1:3), 'ZYX');
 end
 
-
-
 %% Graph
+% XYZ
 close all
 figure(1)
 plot(x_right, y_right);
@@ -112,6 +113,26 @@ figure(2)
 plot(squeeze(T_d_R(1,4,:)), squeeze(T_d_R(2,4,:)),squeeze(T_d_L(1,4,:)), squeeze(T_d_L(2,4,:)))
 title('Desired')
 legend('Right', 'Left')
+
+% RPY
+ind = 1:length(T_d_R);
+figure()
+plot(ind,rpy_R(1,:),ind,rpy_R(2,:),ind,rpy_R(3,:))
+title('Actual Right')
+legend('R', 'P', 'Y')
+figure()
+plot(ind,rpy_L(1,:),ind,rpy_L(2,:),ind,rpy_L(3,:))
+title('Actual Left')
+legend('R', 'P', 'Y')
+
+figure()
+plot(ind,euler{1}(1,:),ind,euler{1}(2,:),ind,euler{1}(3,:))
+title('Desired Right')
+legend('R', 'P', 'Y')
+figure()
+plot(ind,euler{2}(1,:),ind,euler{2}(2,:),ind,euler{2}(3,:))
+title('Desired Left')
+legend('R', 'P', 'Y')
 %% inverse differential kinematics for the dual arm
 function [thetalist,err_val_n_L,err_val_n_R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R, T_d_L, thetalist0, eomg, ev)
     global W
