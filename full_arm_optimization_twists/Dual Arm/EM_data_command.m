@@ -12,15 +12,15 @@ orientations{2} = zeros(3,3,length(em_data_adj));
 
 for i = 1:length(euler{1})
    for c = 1:2
-       orientations{c}(:,:,i) = eul2rotm(euler{c}(:,i)', 'ZYX'); % eye(3);
+       orientations{c}(:,:,i) = eye(3);%eul2rotm(euler{c}(:,i)', 'ZYX'); % eye(3);
    end
 end
 
 T_d_R = zeros(4,4,length(euler{1}));
 T_d_L = zeros(4,4,length(euler{1}));
 for i = 1:length(orientations{1})
-   T_d_R(:,:,i) = RpToTrans(orientations{1}(:,:,i), xyz{1}(:,1));%Change to i to map actual data
-   T_d_L(:,:,i) = RpToTrans(orientations{2}(:,:,i), xyz{2}(:,1));
+   T_d_R(:,:,i) = RpToTrans(orientations{1}(:,:,i), xyz{1}(:,i));%Change to i to map actual data
+   T_d_L(:,:,i) = RpToTrans(orientations{2}(:,:,i), xyz{2}(:,i));
 end
 %% Manipulator twists
 [ M_K, Slist_K, M_R, Slist_R, M_L, Slist_L] = dual_arm_twists();
@@ -47,8 +47,8 @@ q            = theta0;
 
 % redefine the matrix weights to be higher
 W_KUKA = 10*eye(7);
-W_L    = eye(7);
-W_R    = eye(7);
+W_L    = 1*eye(7);
+W_R    = 1*eye(7);
 W      = blkdiag(W_KUKA,W_L,W_R);
 
 % the delta that needs to move
@@ -73,6 +73,15 @@ x_right = zeros(1,length(T_d_R));
 x_left  = zeros(1,length(T_d_R));
 y_right = zeros(1,length(T_d_R));
 y_left  = zeros(1,length(T_d_R));
+z_right = zeros(1,length(T_d_R));
+z_left  = zeros(1,length(T_d_R));
+d = zeros(1,length(T_d_R));
+D = zeros(1,length(T_d_R));
+z_unitv_right = zeros(3, length(T_d_R));
+z_unitv_left = zeros(3, length(T_d_R));
+z_unitv_right_des = zeros(3, length(T_d_R));
+z_unitv_left_des = zeros(3, length(T_d_R));
+z_vec = [0;0;1];
 for i = 1:length(T_d_R)
 
     q_store(:,i)    = q;
@@ -91,48 +100,79 @@ for i = 1:length(T_d_R)
     err_R(:,:,i) = T_d_R(:,:,i) - FK_R;
     err_L(:,:,i) = T_d_L(:,:,i) - FK_L;
     q = thetalist;
+    
     x_right(i) = FK_R(1,4);
     y_right(i) = FK_R(2,4);
+    z_right(i) = FK_R(3,4);
+    z_unitv_right(:,i) = FK_R(1:3,1:3)*z_vec;
+    z_unitv_right_des(:,i) = T_d_R(1:3,1:3,i)*z_vec;
+    
     x_left(i) = FK_L(1,4);
     y_left(i) = FK_L(2,4);
+    z_right(i) = FK_L(3,4);
+    z_unitv_left(:,i) = FK_L(1:3,1:3)*z_vec;
+    z_unitv_left_des(:,i) = T_d_L(1:3,1:3,i)*z_vec;
     
-    rpy_R(:,i) = rotm2eul(FK_R(1:3,1:3), 'ZYX');
-    rpy_L(:,i) = rotm2eul(FK_L(1:3,1:3), 'ZYX');
+    J = computeJacobian(thetalist);
+    JTJ = J'*J;
+    E = eig(JTJ);
+    d(i) = min(E);
+    D(i) = max(E);
+    
+    
+    %rpy_R(:,i) = rotm2eul(FK_R(1:3,1:3), 'ZYX');
+    %rpy_L(:,i) = rotm2eul(FK_L(1:3,1:3), 'ZYX');
 end
 
 %% Graph
-% XYZ
-close all
-figure(1)
-plot(x_right, y_right);
-hold on
-plot(x_left, y_left);
-title('Actual')
-legend('Right', 'Left')
-figure(2)
-plot(squeeze(T_d_R(1,4,:)), squeeze(T_d_R(2,4,:)),squeeze(T_d_L(1,4,:)), squeeze(T_d_L(2,4,:)))
-title('Desired')
-legend('Right', 'Left')
+% %Regular graphs
+% % XYZ
+% close all
+% figure(1)
+% plot(x_right, y_right);
+% hold on
+% plot(x_left, y_left);
+% title('Actual')
+% legend('Right', 'Left')
+% figure(2)
+% plot(squeeze(T_d_R(1,4,:)), squeeze(T_d_R(2,4,:)),squeeze(T_d_L(1,4,:)), squeeze(T_d_L(2,4,:)))
+% title('Desired')
+% legend('Right', 'Left')
+% 
+% % RPY
+% ind = 1:length(T_d_R);
+% figure()
+% plot(ind,rpy_R(1,:),ind,rpy_R(2,:),ind,rpy_R(3,:))
+% title('Actual Right')
+% legend('R', 'P', 'Y')
+% figure()
+% plot(ind,rpy_L(1,:),ind,rpy_L(2,:),ind,rpy_L(3,:))
+% title('Actual Left')
+% legend('R', 'P', 'Y')
+% 
+% figure()
+% plot(ind,euler{1}(1,:),ind,euler{1}(2,:),ind,euler{1}(3,:))
+% title('Desired Right')
+% legend('R', 'P', 'Y')
+% figure()
+% plot(ind,euler{2}(1,:),ind,euler{2}(2,:),ind,euler{2}(3,:))
+% title('Desired Left')
+% legend('R', 'P', 'Y')
+%% Quiver plot
+quiver3(x_right, y_right, z_right, z_unitv_right(1,:),z_unitv_right(2,:),z_unitv_right(3,:));
+hold on;
+quiver3(x_left, y_left, z_left, z_unitv_left(1,:),z_unitv_left(2,:),z_unitv_left(3,:));
+title('Obtained trajectory')
 
-% RPY
-ind = 1:length(T_d_R);
 figure()
-plot(ind,rpy_R(1,:),ind,rpy_R(2,:),ind,rpy_R(3,:))
-title('Actual Right')
-legend('R', 'P', 'Y')
-figure()
-plot(ind,rpy_L(1,:),ind,rpy_L(2,:),ind,rpy_L(3,:))
-title('Actual Left')
-legend('R', 'P', 'Y')
 
-figure()
-plot(ind,euler{1}(1,:),ind,euler{1}(2,:),ind,euler{1}(3,:))
-title('Desired Right')
-legend('R', 'P', 'Y')
-figure()
-plot(ind,euler{2}(1,:),ind,euler{2}(2,:),ind,euler{2}(3,:))
-title('Desired Left')
-legend('R', 'P', 'Y')
+quiver3(squeeze(T_d_R(1,4,:))', squeeze(T_d_R(2,4,:))', squeeze(T_d_R(3,4,:))'...
+    , z_unitv_right_des(1,:),z_unitv_right_des(2,:),z_unitv_right_des(3,:));
+hold on;
+quiver3(squeeze(T_d_L(1,4,:))', squeeze(T_d_L(2,4,:))', squeeze(T_d_L(3,4,:))'...
+    , z_unitv_left_des(1,:),z_unitv_left_des(2,:),z_unitv_left_des(3,:));
+title('Desired trajectory')
+
 %% inverse differential kinematics for the dual arm
 function [thetalist,err_val_n_L,err_val_n_R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R, T_d_L, thetalist0, eomg, ev)
     global W
