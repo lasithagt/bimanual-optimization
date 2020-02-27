@@ -1,4 +1,4 @@
-clear; clc;
+clear; close all
 %% Import EM data
 load('path_tracking.mat')
 %% Process EM data
@@ -12,7 +12,7 @@ orientations{2} = zeros(3,3,length(em_data_adj));
 
 for i = 1:length(euler{1})
    for c = 1:2
-       orientations{c}(:,:,i) = eye(3);%eul2rotm(euler{c}(:,i)', 'ZYX'); % eye(3);
+       orientations{c}(:,:,i) = eye(3); %eul2rotm(euler{c}(:,i)', 'ZYX'); % eye(3);
    end
 end
 
@@ -24,7 +24,7 @@ for i = 1:length(orientations{1})
 end
 %% Manipulator twists
 [ M_K, Slist_K, M_R, Slist_R, M_L, Slist_L] = dual_arm_twists();
-%% Compute the weights matrix
+
 global W
 
 
@@ -38,15 +38,15 @@ q = [theta_KUKA;theta_mini_R;theta_mini_L];
 
 %% Command script
 eomg = 1;
-ev = 0.0001;
+ev = 0.001;
 
 % find the global position with kuka abled.
-W = eye(21);
+W            = eye(21);
 [theta0,L,R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R(:,:,i), T_d_L(:,:,i), q, eomg, ev);
 q            = theta0;
 
 % redefine the matrix weights to be higher
-W_KUKA = 10*eye(7);
+W_KUKA = 1*eye(7);
 W_L    = 1*eye(7);
 W_R    = 1*eye(7);
 W      = blkdiag(W_KUKA,W_L,W_R);
@@ -159,12 +159,13 @@ end
 % title('Desired Left')
 % legend('R', 'P', 'Y')
 %% Quiver plot
+figure(1)
 quiver3(x_right, y_right, z_right, z_unitv_right(1,:),z_unitv_right(2,:),z_unitv_right(3,:));
 hold on;
 quiver3(x_left, y_left, z_left, z_unitv_left(1,:),z_unitv_left(2,:),z_unitv_left(3,:));
 title('Obtained trajectory')
 
-figure()
+figure(2)
 
 quiver3(squeeze(T_d_R(1,4,:))', squeeze(T_d_R(2,4,:))', squeeze(T_d_R(3,4,:))'...
     , z_unitv_right_des(1,:),z_unitv_right_des(2,:),z_unitv_right_des(3,:));
