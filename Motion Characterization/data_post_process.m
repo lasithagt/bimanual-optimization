@@ -12,17 +12,22 @@ function [d, p_m, p_std, o_m, o_std] = data_post_process(data_file)
     new_pp_data(1:3,:) = new_pp_data(1:3,:) - p_m;
 
     % calculatet eh mean of x,y and z orientations
+    % convert orientations to quternions.
     d_o   = d.em_data_adj; d_o = d_o(4:6,:);
+    d_o_rotm  = eul2rotm(d_o','ZYX');
+    quat_vec  = rotm2quat(d_o_rotm);
+    quat_mean = mean(quat_vec,1);
+    
     o_m   = mean(d_o,2);
     o_std = std(d_o,0,2);
-    new_pp_data(4:6,:) = new_pp_data(4:6,:) - o_m;
+    new_pp_data(4:6,:) = new_pp_data(4:6,:) ;
     
     % options = statset('Display','final');
     % gm = fitgmdist(X,2,'Options',options)
     
     % resample in the abstracted data parameters
     d.em_data_adj = new_pp_data;
-    stats       = [p_m, p_std, o_m, o_std];
+    stats         = [p_m, p_std, o_m, o_std];
     
     % save as a new data structure
     name = split(data_file, '.mat');

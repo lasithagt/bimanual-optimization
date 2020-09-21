@@ -4,7 +4,7 @@ function workspace_generator(data)
     r_x = rand(1,n_)+1;
     r_y = rand(1,n_)+1;
     r_z = rand(1,n_)+1;
-    t = linspace(0,2*pi,100);
+    t   = linspace(0,2*pi,100);
 
     close all
 
@@ -15,7 +15,7 @@ function workspace_generator(data)
     vec_cv      = v - c;
 
     n           = null(vec_cv'./norm(vec_cv));
-    cone_vec    = 2*n(:,1)*cos(t)+2*n(:,2)*sin(t) + 2*c;
+    cone_vec    = 2*n(:,1)*cos(t) + 2*n(:,2)*sin(t) + 2*c;
 
     figure(1)
     plot3(r_x,r_y,r_z,'k*')
@@ -25,6 +25,7 @@ function workspace_generator(data)
     quiver3(ones(1,n_)*1.5, ones(1,n_)*1.5, ones(1,n_)*1.5, cone_vec(1,:)-1.5, cone_vec(2,:)-1.5, cone_vec(3,:)-1.5,1.5)
     hold on
 
+    
     xyz_data = [];
     for j = 1:n_
         v_n = null([v(1)-r_x(j) v(2)-r_y(j) v(3)-r_z(j)]);
@@ -35,16 +36,20 @@ function workspace_generator(data)
         v = [v(1)-r_x(j) v(2)-r_y(j) v(3)-r_z(j)];
         v = v./norm(v);
         %     [cross([0 0 1],v) acos(dot([0 0 1],v))]
-        R = axang2rotm([cross([0 0 1],v) real(acos(dot([0 0 1],v)))]);
+        R     = axang2rotm([cross([0 0 1],v) real(acos(dot([0 0 1],v)))]);
         xyz_R = R * xyz;
+        
+%         d_o_rotm  = eul2rotm(d_o','ZYX');
+%         quat_vec  = rotm2quat(d_o_rotm);
+%         quat_mean = mean(quat_vec,1);
 
         xyz_data = [xyz_data xyz_R];
         plot3(r_x(j)+xyz_R(1,:),r_y(j)+xyz_R(2,:),r_z(j)+xyz_R(3,:),'r.')
 
         hold on
     end
-    k = boundary(xyz_data(1,:)', xyz_data(2,:)', xyz_data(3,:)');
-    plot3(xyz_data(1,k), xyz_data(2,k), xyz_data(3,k));
+    % k = boundary(xyz_data(1,:)', xyz_data(2,:)', xyz_data(3,:)');
+    % plot3(xyz_data(1,k), xyz_data(2,k), xyz_data(3,k));
 
     axis([-5 5 -5 5 -5 5])
     % axis equal
@@ -57,6 +62,12 @@ function workspace_generator(data)
     for i=1:n
         R(:,:,i) = axang2rotm([cross(c,b) acos(dot(a,b))]);
     end
+    
+    quat_vec  = rotm2quat(R);
+    quat_mean = mean(quat_vec,1);
+    R_m       = quat2rotm(quat_mean);
+    
+    % plot3(xyz_data(1,k), xyz_data(2,k), xyz_data(3,k));
     
 end
 

@@ -1,15 +1,13 @@
 
 close all;
 clear;
-
 % addpath('../npy-matlab/npy-matlab')
 
 % Load the data from a mat file
 calibration = 1;
 if (calibration)
-    cali_data = readNPY('Data/EM_tracker/calibration_data_soldering.npy');
-    % ws_d      = rosbag('Data/2019-05-30-15-51-10.bag');
-    ws_d      = rosbag('Data/EM_tracker/soldering.bag');
+    cali_data = readNPY('raw_data/EM_tracker/calibration_data_path_tracking_2.npy');
+    ws_d      = rosbag('raw_data/EM_tracker/path_tracking.bag');
 
 
     em_data = select(ws_d,'Topic','/EMdata');
@@ -29,6 +27,7 @@ if (calibration)
         em_data_mat(1,:,i) = horzcat(e_temp_pos.X);
         em_data_mat(2,:,i) = horzcat(e_temp_pos.Y);
         em_data_mat(3,:,i) = horzcat(e_temp_pos.Z);
+        
         % since using eul
         em_data_mat(4,:,i) = horzcat(e_temp_ori.Z);
         em_data_mat(5,:,i) = horzcat(e_temp_ori.Y);
@@ -48,14 +47,14 @@ if (calibration)
 
         sensor_i_data = cali_data(:,:,i);
         pos_xyz = sensor_i_data(1:3,:)';
-    %     temp = sensor_i_data(4,:);
-    %     sensor_i_data(4:end-1,:) = sensor_i_data(5:end,:);
-    %     sensor_i_data(end,:) = temp;
-    %     ang_eul = quat2eul(sensor_i_data(4:end,:)','ZYX') ;
+        %     temp = sensor_i_data(4,:);
+        %     sensor_i_data(4:end-1,:) = sensor_i_data(5:end,:);
+        %     sensor_i_data(end,:) = temp;
+        %     ang_eul = quat2eul(sensor_i_data(4:end,:)','ZYX') ;
 
         ang_eul = sensor_i_data(4:end-1,:)';
         % compute the tool tip transformation matrix for all the instruments
-        [tool_tip_cal{i}, fval]  = tool_tip_approx_([pos_xyz ang_eul],i);
+        [tool_tip_cal{i}, fval]  = tool_tip_approx([pos_xyz ang_eul],i);
 
 
         fprintf("Calibration Tool %d error: %d\n",[i, fval])
@@ -63,12 +62,19 @@ if (calibration)
         em_data_mat_pos = em_data_mat(1:3,:,i)';
         % em_data_mat_ang = quat2eul(em_data_mat(4:end,:,i)');
         em_data_mat_ang = em_data_mat(4:end-1,:,i)';
+        
+        rotm_global = rotx(-pi) * rotz(pi);
 
         for k = 1:n_data
-            em_data_adj(1:3,k,i)   = em_data_mat_pos(k,:)' + eul2rotm(em_data_mat_ang(k,:),'ZYX')*tool_tip_cal{i}(1:3)';
+            em_data_adj(1:3,k,i)   = em_data_mat_pos(k,:)' + eul2rotm(em_data_mat_ang(k,:),'ZYX') * tool_tip_cal{i}(1:3)';
             temp                   = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [1 0 0]';
             em_data_adj(4:end,k,i) = temp;
+            
+            em_data_adj(1:3,k,i)   = rotm_global * em_data_adj(1:3,k,i);
+            em_data_adj(4:end,k,i) = rotm_global * em_data_adj(4:end,k,i);
         end
+        
+        % save velocity data
         em_tracker_vel(1,:,i) = getDerivative(em_data_adj(1,:,i)',100.0);
         em_tracker_vel(2,:,i) = getDerivative(em_data_adj(2,:,i)',100.0);
         em_tracker_vel(3,:,i) = getDerivative(em_data_adj(3,:,i)',100.0);
@@ -87,7 +93,7 @@ figure(3)
 % close all;
 line = {'r-','k-'};
 q_ = {'r','b'};
-r = 50;
+r = 10;
 
 numsen = size(em_data_adj,3);
 n_data = size(em_data_adj,2);
@@ -106,14 +112,11 @@ for j=1:n_data
     for i=1:numsen
         if mod(j,r) == 0
             
-%             addpoints(h(i), em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i));
             plot3(em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i),'.')
             quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
                 -em_data_adj(4,j,i),-em_data_adj(5,j,i),-em_data_adj(6,j,i),q_{i}, 'LineWidth',0.5,'MaxHeadSize',0.05)
-% 
             hold on
-            %drawnow
-            axis([0 30 -10 10 -10 25])
+%             axis([0 30 -10 10 -10 25])
             pause(0.01)
         end
     end
