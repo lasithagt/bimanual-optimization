@@ -48,7 +48,7 @@ function [thetalist, success] ...
 alpha = 1;
 thetalist = thetalist0;
 i = 0;
-maxiterations = 20;
+maxiterations = 2;
 Tsb = FKinSpace(M, Slist, thetalist);
 Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T));
 err = norm(Vs(1: 3)) > eomg || norm(Vs(4: 6)) > ev;
@@ -103,17 +103,19 @@ end
 
 
 function dcdq = null_space(S, q_init)
+    global input
 
     f = @(w)det(J_desired(J(w),w)*0.00 - J(w)*J(w)');
     q = q_init;
     Jq = J(q);
     d = det(Jq(1:3,:)*Jq(1:3,:)');
-    %     q_lim_grad = exp((q - input.q_min)) + exp((q - input.q_max))
+        q_lim_grad = exp((q - input.q_min')) + exp((q - input.q_max'));
     %     for i = 1:10
     %         d = d + finite_difference(f,q) * ones(7,1)*0.1;
     %     end
     %     cost = @(q)d - det(J(q_init)*J(q_init)');
-    dcdq = finite_difference(f, q);
+    % dcdq = finite_difference(f, q);
+    dcdq = 0*q_lim_grad';
     
     function J_v = J(w)
         J_v = JacobianSpace(S,w);

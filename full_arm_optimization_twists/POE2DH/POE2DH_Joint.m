@@ -6,6 +6,7 @@ function [theta, d, alpha, a]=POE2DH_Joint (xi)
 %   theta, d, alpha, a:     DH parameters
 
 DELTA=10^(-12);
+DELTA_W = 10^-1;
 
 w=xi(1:3);
 v=xi(4:6);    
@@ -17,7 +18,7 @@ end
     
 if norm(w)~=0 %revolute joint
     alpha=acos(w(3));    
-    if abs(w(3)-1)<DELTA || abs(w(3)+1)<DELTA %w(3)==1 or w(3)==-1 
+    if abs(w(3)-1)<DELTA_W || abs(w(3)+1)<DELTA_W %w(3)==1 or w(3)==-1 
         a = sqrt(v(1)^2+v(2)^2);
         theta = atan2(v(1)/w(3),-v(2)/w(3));
         d = 0;
@@ -32,6 +33,7 @@ if norm(w)~=0 %revolute joint
         %of ensuring a>=0
                 
         theta = atan2(w(1)/sin(alpha),-w(2)/sin(alpha));
+        
         a = -v(3)/sin(alpha);
         d = (w(1)*v(2)-w(2)*v(1))/(w(1)*w(1)+w(2)*w(2));
     end

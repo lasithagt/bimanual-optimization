@@ -16,7 +16,7 @@ function [thetalist, dexterity, ratio] = kuka_test(theta_KUKA)
     S1 = ScrewToAxis(q1,w1, h);
     S2 = ScrewToAxis(q2,w2, h);
     S3 = ScrewToAxis(q3,w3, h);
-    S4 = ScrewToAxis(q4,w4, h);
+    S4 = ScrewToAxis(0*q4,0*w4, h);
     S5 = ScrewToAxis(q5,w5, h);
     S6 = ScrewToAxis(q6,w6, h);
     S7 = ScrewToAxis(q7,w7, h);
@@ -30,20 +30,47 @@ function [thetalist, dexterity, ratio] = kuka_test(theta_KUKA)
     rng default
     thetalist0 = [0,0,0,0,0,0,0]' + 0.1*rand(7,1);
     
-    % path
-    r = 0.06; t = linspace(0,2*pi,10);
-    x = r*sin(t); y = r*cos(t); z = 0.8*ones(1,numel(t));
-    R = eye(3);
-    for i = 1:numel(t)
-        [thetalist(:,i), success] = IKinSpace_kuka(S, g_st, RpToTrans(R,[x(i),y(i),z(i)]'), thetalist0, eomg, ev);
-        success
-%         thetalist = mod(thetalist, 2*pi);
-        J_K_s                = JacobianSpace(Slist_K,thetalist(:,i)');
-        det(J_K_s*J_K_s')
-        dexterity(i)            = det(J_K_s(1:3,:)*J_K_s(1:3,:)');
-        ratio(i) = max(eig(J_K_s(1:3,:)*J_K_s(1:3,:)')) / min(eig(J_K_s(1:3,:)*J_K_s(1:3,:)'));
-        thetalist0 = thetalist(:,i);
+    % cartesian path
+    r = 0.06; t = linspace(0, 2 * pi, 1000);
+    x = r * sin(t); y = r * cos(t); z = 0.8 * ones(1,numel(t));
+    R = eye(3); desired_R_euler = rotm2eul(R)';
+    
+    fk_desired = [x; y; z; repmat(desired_R_euler, 1, length(t))];
+    fk_current = zeros(6, length(t));
+    thetalist  = zeros(7, length(t));
+    terminate  = @(c, i)c < 0.01 || i > 10;
+    j = 0;
+    c = cost_trajectory(fk_desired, fk_current);
+    
+    while ~terminate(c, j)
+
+        for i = 1:numel(t)
+            [thetalist(:,i), success] = IKinSpace_modified(S, g_st, RpToTrans(R,[x(i),y(i),z(i)]'), thetalist0, eomg, ev);
+            % success
+            thetalist                 = mod(thetalist, 2 * pi);
+            J_K_s                     = JacobianSpace(Slist_K, thetalist(:,i)');
+            
+            % dexterity(i)            = det(J_K_s(1:3,:)*J_K_s(1:3,:)');
+            % ratio(i) = max(eig(J_K_s(1:3,:)*J_K_s(1:3,:)')) / min(eig(J_K_s(1:3,:)*J_K_s(1:3,:)'));
+            
+            thetalist0                = thetalist(:,i);
+            fk_                       = FKinSpace(g_st, S, thetalist(:,i));
+            fk_current(1:3, i)        = fk_(1:3, 4);
+            fk_current(4:6, i)        = rotm2eul(fk_(1:3, 1:3)');
+        end
+        
+        % update terminate conditions
+        j = j + 1;
+        c = cost_trajectory(fk_desired, fk_current);
+        plot3(fk_current(1,:), fk_current(2,:), fk_current(3,:)); 
+        axis equal
     end
-%     thetalist
+    
+    
+    
+    function c = cost_trajectory(x_desired, x_trajectory)
+        c = sum(sum((x_desired - x_trajectory).^2, 1), 2);
+    end
+
     
 end

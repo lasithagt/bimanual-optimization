@@ -4,9 +4,17 @@ from sympy import symbols, diff
 from sympybotics._compatibility_ import exec_
 a1, a2, a3, a4, tool = symbols('a1 a2 a3 a4 tool')
 d1, d2, d3, d4 = symbols('d1 d2 d3 d4')
+t1, t2, t3, t4 = symbols('t1 t2 t3 t4')
+
+# t1 = pi/2
+# t2 = -pi/2
+# t3 = -pi/2
+# t4 = 0
+
 # This is for a robot with specific alpha angles
-# rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( 'pi/2', a4, d4, 'q'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q'), ( '0', 0, 0, 'q')], dh_convention='standard')
-rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( '0', a4, d4, 'q-pi/2'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q-pi/2'), ( '0', 0, tool, 'q')], dh_convention='standard')
+# rbtdef = sympybotics.RobotDef('7DOF Robot', [('pi/2', a1, d1, 'q'),  ( '-pi/2', a2, d2, 'q'), ('-pi/2', a3, d3, 'q'), ( '0', a4, d4, 'q-pi/2'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q-pi/2'), ( '0', 0, tool, 'q')], dh_convention='standard')
+rbtdef = sympybotics.RobotDef('7DOF Robot', [(t1, a1, d1, 'q'),  ( t2, a2, d2, 'q'), (t3, a3, d3, 'q'), (t4, a4, d4, 'q-pi/2'), ( 'pi/2', 0, 0, 'q'), ( '-pi/2', 0, 0, 'q-pi/2'), ( '0', 0, tool, 'q')], dh_convention='standard')
+
 
 rbtdef.frictionmodel = {'Coulomb', 'viscous'} # options are None or a combination of 'Coulomb', 'viscous' and 'offset'
 rbtdef.gravityacc = sympy.Matrix([0.0, 0.0, -9.81])
@@ -72,22 +80,22 @@ INV_func_def = sympybotics.robotcodegen.robot_code_to_func('matlab', rbt.invdyn_
 
 # writing matrices to a text file
 file = open('rbt_params.txt','w') 
-file.write(FK_a1_func_def)
-file.write(FK_a2_func_def)
-file.write(FK_a3_func_def)
-file.write(FK_a4_func_def)
+# file.write(FK_a1_func_def)
+# file.write(FK_a2_func_def)
+# file.write(FK_a3_func_def)
+# file.write(FK_a4_func_def)
 
-file.write(FK_d1_func_def)
-file.write(FK_d2_func_def)
-file.write(FK_d3_func_def)
-file.write(FK_d4_func_def)
+# file.write(FK_d1_func_def)
+# file.write(FK_d2_func_def)
+# file.write(FK_d3_func_def)
+# file.write(FK_d4_func_def)
 
-file.write(Jac_func_def)
+# file.write(Jac_func_def)
 
 file.write(FK_func_def) 
-file.write(M_func_def) 
-file.write(C_func_def)
-file.write(G_func_def)
-file.write(INV_func_def) 
+# file.write(M_func_def) 
+# file.write(C_func_def)
+# file.write(G_func_def)
+# file.write(INV_func_def) 
 file.close()
 

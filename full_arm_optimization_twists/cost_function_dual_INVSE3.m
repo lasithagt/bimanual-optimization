@@ -1,8 +1,7 @@
 function F = cost_function_dual_INVSE3(x)
     
-    % OPTIMIZATIONROUTINE This function evaluates the overall objective function (F) for a
+    % OPTIMIZATION ROUTINE This function evaluates the overall objective function (F) for a
     % specific set of DH parameters
-    global theta
     global input
     % Read the parameters from the input structure
     
@@ -30,7 +29,11 @@ function F = cost_function_dual_INVSE3(x)
     % solve for the init q using cons opt.
     T = zeros(4,4,2); T(:,:,1) = T_L; T(:,:,2) = T_R;
     w = {x(1:3),x(4:6),x(7:9)};
+    for i=1:3
+        w{i} = w{i} ./ norm(w{i});
+    end
     q = {x(10:12),x(13:15),x(16:18)};
+    
     
     for k = 1:n_arms
         [Slist, M]                          = manipulator_exp(w, q, T(:,:,k));                                  
@@ -41,7 +44,7 @@ function F = cost_function_dual_INVSE3(x)
         V       = V_se3(pd,pa);
         
         err_rel = sum(sum((theta(:,1:end-1) - theta(:,2:end)).^2,2));
-        % dex   = dex(JacobianSpace(Slist, theta(n_links*(k-1)+1:n_links*k,:));
+        % d       = dex(Slist, theta(n_links*(k-1)+1:n_links*k,:));
         f_val   = f_val + norm(V) + 0.1*err_rel;  
     end
        

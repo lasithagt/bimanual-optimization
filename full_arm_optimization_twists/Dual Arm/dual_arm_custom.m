@@ -8,7 +8,6 @@ T_R = eye(4);
 % T_R(1:3,end) = [10;-12;2];
 % T_L(1:3,1:3) = roty(pi/2)*rotx(-0*pi/4);
 % T_L(1:3,end) = [-10;-12;2];
-% 
 % T_B = {T_L, T_R};
 
 w = {normalize([0.9998   -0.9834    0.3016],'norm'), normalize([-0.5236   -0.8948   -0.8543],'norm')', normalize([0.9248   -0.4488    0.9948],'norm')'};
@@ -55,16 +54,16 @@ J            = computeJacobian(q);
 
 %% main script
 eomg = 0.001;
-ev = 0.0001;
+ev   = 0.0001;
 % the delta that needs to move
 T_delta_R    = RpToTrans(eye(3),[0.0,0.0,0.01]');
 T_delta_L    = RpToTrans(eye(3),[0.01,0.0,0.01]');
 
 % current positions
 FKinSpace(M_R, Slist_R, theta_mini_R);
-FK_K         = FKinSpace(M_K, Slist_K, theta_KUKA);
-FK_R         = FK_K * FKinSpace(M_R, Slist_R, theta_mini_R);
-FK_L         = FK_K * FKinSpace(M_L, Slist_L, theta_mini_L);
+FK_K         = FKinSpace(M_K, Slist_K, theta_KUKA)
+FK_R         = FK_K * FKinSpace(M_R, Slist_R, theta_mini_R)
+FK_L         = FK_K * FKinSpace(M_L, Slist_L, theta_mini_L)
 
 % compute the spatial velocity from velocity
 v_L = [0,0,0]'; v_R = [0,0,0]';
@@ -90,7 +89,7 @@ FK_R         = FK_K * FKinSpace(M_R, Slist_R, theta_R);
 FK_L         = FK_K * FKinSpace(M_L, Slist_L, theta_L);
 
 err_L        = T_d_R - FK_R;
-err_R        = T_d_L - FK_L
+err_R        = T_d_L - FK_L;
 
 %% inverse differential kinematics for the dual arm
 function [thetalist,err_val_n_L,err_val_n_R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R, T_d_L, thetalist0, eomg, ev)

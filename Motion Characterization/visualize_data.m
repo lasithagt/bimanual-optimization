@@ -89,38 +89,39 @@ end
 
 %% plotting
 figure(3)
-% TODO: Extract force data at each point. (for visualization)
-% close all;
-line = {'r-','k-'};
-q_ = {'r','b'};
-r = 10;
-
-numsen = size(em_data_adj,3);
-n_data = size(em_data_adj,2);
-h1 = animatedline('Marker','.','Color','r');
-h2 = animatedline('Marker','.','Color','k');
-
-
-xlabel('x position')
-ylabel('y position')
-zlabel('z position')
-
-grid on
-h = [h1,h2];
-for j=1:n_data
-    j;
-    for i=1:numsen
-        if mod(j,r) == 0
-            
-            plot3(em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i),'.')
-            quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
-                -em_data_adj(4,j,i),-em_data_adj(5,j,i),-em_data_adj(6,j,i),q_{i}, 'LineWidth',0.5,'MaxHeadSize',0.05)
-            hold on
-%             axis([0 30 -10 10 -10 25])
-            pause(0.01)
-        end
-    end
-end
+% % TODO: Extract force data at each point. (for visualization)
+% % close all;
+% line = {'r-','k-'};
+% q_ = {'r','b'};
+% r = 10;
+% 
+% numsen = size(em_data_adj,3);
+% n_data = size(em_data_adj,2);
+% h1 = animatedline('Marker','.','Color','r');
+% h2 = animatedline('Marker','.','Color','k');
+% 
+% 
+% xlabel('x position')
+% ylabel('y position')
+% zlabel('z position')
+% 
+% grid on
+% h = [h1,h2];
+% for j=1:n_data
+%     j;
+%     for i=1:numsen
+%         if mod(j,r) == 0
+%             
+%             plot3(em_data_adj(1,j,i), em_data_adj(2,j,i), em_data_adj(3,j,i),'.')
+%             quiver3(em_data_adj(1,j,i),em_data_adj(2,j,i),em_data_adj(3,j,i), ...
+%                 -em_data_adj(4,j,i),-em_data_adj(5,j,i),-em_data_adj(6,j,i),q_{i}, 'LineWidth',0.5,'MaxHeadSize',0.05)
+%             hold on
+% %             axis([0 30 -10 10 -10 25])
+%             pause(0.01)
+%         end
+%     end
+% end
+plot_data(em_data_adj, false)
 
 figure(4)
 % TODO: Extract force data at each point. (for visualization)

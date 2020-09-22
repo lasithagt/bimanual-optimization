@@ -5,7 +5,7 @@ addpath('../')
 
 %% Load and process EM tracker data
 m         = 50;
-des_poses = trajectory_pose_read('soldering_new_pp.mat', m);
+des_poses = trajectory_pose_read('../Data/suturing_new_pp.mat', m);
 pd        = des_poses(:,:,:,:);
 pd(1:3,end,:,:) = pd(1:3,end,:,:)./100;
 
@@ -16,7 +16,7 @@ T_d_L = pd(:,:,:,1);
 %% change the global reference frame.
 T_ck          = [0.6691,0,0.7431,0;0,-1,0,-0.0893;0.7431, 0, -0.6691, 1.3571;0 0 0 1];
 T_ck(1:3,1:3) = rotx(pi);
-T_ck(1:3,end) = [0 -0.0893 0.9]';
+T_ck(1:3,end) = [0 -0.0893 0.8]';
 
 
 for i = 1:m
@@ -25,26 +25,40 @@ for i = 1:m
 end
 
 %% Manipulator morphology (can be changed, with optimized . w and q)
-w = {normalize([0.9998   -0.9834    0.3016],'norm'), normalize([-0.5236   -0.8948   -0.8543],'norm')', normalize([0.9248   -0.4488    0.9948],'norm')'};
-q = {[1.9994 1.9895 -1.9846]/100,   [-1.4524   -1.9511    1.6301]/100,   [1.8253    0.2947    0.3526]/100};
+w = {normalize([0.9998   -0.3625   -0.1059],'norm'), normalize([-0.0466   -0.3016   -0.8999],'norm')', normalize([0.9484   -0.6214    0.5310],'norm')'};
+q = {[2.1708    2.1640 -0.5660]/100,   [-0.2004   -2.1376    1.9171]/100,   [2.0512    0.9997    1.0395]/100};
+
+% [   0.9998   -0.3625   -0.1059   -0.0466   -0.3016   -0.8999    0.9484   -0.6214    0.5310    2.1708    2.1640...
+%    -0.5660   -0.2004   -2.1376    1.9171    2.0512    0.9997    1.0395    4.9142   -7.3349    4.9978]
+
+% w = {normalize([0.9998   -0.9834    0.3016],'norm'), normalize([-0.5236   -0.8948   -0.8543],'norm')', normalize([0.9248   -0.4488    0.9948],'norm')'};
+% q = {[1.9994 1.9895 -1.9846]/100,   [-1.4524   -1.9511    1.6301]/100,   [1.8253    0.2947    0.3526]/100};
 
 T_L = eye(4); T_R = eye(4);
 
+% T_R(1:3,1:3) = roty(-pi/2)*rotx(-0*pi/4);
+% T_R(1:3,end) = [-3;-6.0107;0.9967]./100;
+% 
+% T_L(1:3,1:3) = roty(pi/2)*rotx(-0*pi/4);
+% T_L(1:3,end) = [3;-6.0107;0.9967]./100;
+
 T_R(1:3,1:3) = roty(-pi/2)*rotx(-0*pi/4);
-T_R(1:3,end) = [-3;-6.0107;0.9967]./100;
+T_R(1:3,end) = [-4.9142;-7.3349;4.9967]./100;
 
 T_L(1:3,1:3) = roty(pi/2)*rotx(-0*pi/4);
-T_L(1:3,end) = [3;-6.0107;0.9967]./100;
+T_L(1:3,end) = [4.9142;-7.3349;4.9967]./100;
 
+global T_B
 T_B = {T_L, T_R};
 
 %% Manipulator twists
 
 [ M_K, Slist_K, M_R, Slist_R, M_L, Slist_L] = dual_arm_twists_custom_update(w, q, T_B);
+ kp = {M_K, Slist_K, M_R, Slist_R, M_L, Slist_L};
 % [ M_K, Slist_K, M_R, Slist_R, M_L, Slist_L] = dual_arm_twists();
 
 %% Compute the weights matrix
-global W
+global W 
 
 
 %% pre-initialize mini arms
@@ -66,8 +80,8 @@ theta_KUKA   = [pi/4 pi/4 0 pi/2 0 pi/4 -pi/4]';
 q            = [theta_KUKA;theta_mini_L;theta_mini_R];
 
 %% Command script
-eomg = 0.001;
-ev   = 0.001;
+eomg = 0.01;
+ev   = 0.01;
 
 % the delta that needs to move
 T_delta_R    = RpToTrans(eye(3),[0.0,0.0,0.0]');
@@ -82,22 +96,22 @@ T_R          = FK_R * T_delta_R;
 T_L          = FK_L * T_delta_L;
 
 % find the global position with kuka abled.
-W_KUKA = 1*eye(7);
-W_L    = 10*eye(7);
-W_R    = 10*eye(7);
-W      = blkdiag(W_KUKA,W_L,W_R);
-
+% W_KUKA = 1*eye(7);
+% W_L    = 1*eye(7);
+% W_R    = 1*eye(7);
+% W      = blkdiag(W_KUKA,W_L,W_R);
+W        = 30;
 
 % [theta0,L,R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_R, T_L, q, eomg, ev);
 [theta0,L,R] = ikine_dual(Slist_K, M_K, M_R, Slist_R, M_L, Slist_L, T_d_R(:,:,1), T_d_L(:,:,1), q, eomg, ev);
 q            = theta0;
 
 % redefine the matrix weights to be higher
-W_KUKA = 1*eye(7);
-W_L    = 0.1*eye(7);
-W_R    = 0.1*eye(7);
-W      = blkdiag(W_KUKA,W_L,W_R);
-
+% W_KUKA = 1*eye(7);
+% W_L    = 1*eye(7);
+% W_R    = 1*eye(7);
+% W      = blkdiag(W_KUKA,W_L,W_R);
+W      = 1;
 
 % compute the spatial velocity from velocity
 % v_L = [0,0,0]'; v_R = [0,0,0]';
@@ -138,6 +152,8 @@ for i = 1:length(T_d_R)
     
 end
 
+[dex_L, dex_R] = performance(kp, q_mem);
+
 
 %% Quiver plot
 figure(1)
@@ -145,26 +161,30 @@ for i = 1:m
     r_R = fk_actual_R(1:3,1:3,i) * [0 0 -1]';
     plot3(fk_actual_R(1,end,i), fk_actual_R(2,end,i), fk_actual_R(3,end,i),'b*');
     hold on
-    quiver3(fk_actual_R(1,end,i), fk_actual_R(2,end,i), fk_actual_R(3,end,i), r_R(1), r_R(2), r_R(3),  'Color', 'b', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.01);
+    quiver3(fk_actual_R(1,end,i), fk_actual_R(2,end,i), fk_actual_R(3,end,i), r_R(1), r_R(2), r_R(3),  'Color', 'b', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.001);
     hold on;
     r_L = fk_actual_L(1:3,1:3,i) * [0 0 -1]';
     plot3(fk_actual_L(1,end,i), fk_actual_L(2,end,i), fk_actual_L(3,end,i),'k*');
     hold on
-    quiver3(fk_actual_L(1,end,i), fk_actual_L(2,end,i), fk_actual_L(3,end,i), r_L(1), r_L(2), r_L(3),  'Color', 'k', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.01);
+    quiver3(fk_actual_L(1,end,i), fk_actual_L(2,end,i), fk_actual_L(3,end,i), r_L(1), r_L(2), r_L(3),  'Color', 'k', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.001);
+    plot3(fk_actual_K(1,end,i), fk_actual_K(2,end,i), fk_actual_K(3,end,i),'r*');
+    hold on
     title('Obtained trajectory')
 end
+plot3(fk_actual_K(1,end,1), fk_actual_K(2,end,1), fk_actual_K(3,end,1),'g*');
+
 
 figure(2)
 for i = 1:m
     r_R = T_d_R(1:3,1:3,i) * [0 0 -1]';
     plot3(T_d_R(1,end,i), T_d_R(2,end,i), T_d_R(3,end,i),'b*');
     hold on
-    quiver3(T_d_R(1,end,i), T_d_R(2,end,i), T_d_R(3,end,i), r_R(1), r_R(2), r_R(3),  'Color', 'b', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.01);
+    quiver3(T_d_R(1,end,i), T_d_R(2,end,i), T_d_R(3,end,i), r_R(1), r_R(2), r_R(3),  'Color', 'b', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.001);
     hold on;
     r_L = T_d_L(1:3,1:3,i) * [0 0 -1]';
     plot3(T_d_L(1,end,i), T_d_L(2,end,i), T_d_L(3,end,i),'k*');
     hold on
-    quiver3(T_d_L(1,end,i), T_d_L(2,end,i), T_d_L(3,end,i), r_L(1), r_L(2), r_L(3),  'Color', 'k', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.01);
+    quiver3(T_d_L(1,end,i), T_d_L(2,end,i), T_d_L(3,end,i), r_L(1), r_L(2), r_L(3),  'Color', 'k', 'LineWidth',2,'MaxHeadSize',0.1, 'AutoScaleFactor', 0.001);
     title('Desired trajectory')
 end
 
@@ -177,5 +197,25 @@ end
 %     gdot_L = [[Rdot_L;0 0 0],[v_L;0]];
 % end
 
+%%
+function new_W = update_W()
+
+end
+
+%%
+function [dex_L, dex_R] = performance(kp, thetalist)
+    theta_KUKA = thetalist(1:7,:);
+    theta_L    = thetalist(8:14,:);
+    theta_R    = thetalist(15:21,:);
+    dex_L = 0; dex_R = 0;
+    for i = 1:size(thetalist,2)
+        [g_K, ~, ~, Jst_R, Jst_L, J_K_s] = dual_arm_manipulator_kinematics_custom(kp, theta_R(:,i), theta_L(:,i), theta_KUKA(:,i));
+        J_L = Jst_L;
+        J_R = Jst_R;
+        dex_L = dex_L + det(J_L(1:3,:)*J_L(1:3,:)'); 
+        dex_R = dex_R + det(J_R(1:3,:)*J_R(1:3,:)');
+    end
+    
+end
 
     

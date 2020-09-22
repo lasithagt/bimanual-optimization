@@ -14,7 +14,6 @@ xi = POE_par(:,1);
 g = eye(4);
 
 for i=1:n
-
 [theta, d, alpha, a]=POE2DH_Joint (xi);
 
 DH_par(i,:) = [theta, d, alpha, a];
@@ -22,7 +21,14 @@ DH_par(i,:) = [theta, d, alpha, a];
 g = g*DH (DH_par(i,:),'std');
 
 if i~=n
-    xi = adM(inv(g))*POE_par(:,i+1);
+    if (rcond(g) < 0.01)
+        xi = adM(inv(g)+0.0*eye(4))*POE_par(:,i+1);
+    else
+        xi = adM(inv(g))*POE_par(:,i+1);
+    end
+    
+   
+        
 end
     
 end

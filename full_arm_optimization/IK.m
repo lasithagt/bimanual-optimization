@@ -21,13 +21,13 @@ function [theta,f] = IK(a, pose_des, initial_q)
     A_ = [eye(input.n_links); -eye(input.n_links)];
     % TODO: Matlab Robotics Systems toolbox to get the ik solver.
     % Optimization routine to get IK
-    options = optimoptions('fmincon','Algorithm','interior-point', 'Display','off');
+    options     = optimoptions('fmincon','Algorithm','interior-point', 'Display','off');
     options_sa  = optimoptions('simulannealbnd','Display','off','TemperatureFcn','temperatureboltz','InitialTemperature',200,'MaxIterations',2000);
     f = 0;
     
     for k = 1:input.n_arms
         IK_cost = @(Q)IK_cost_(Q,k);
-%         [temp, ~] = simulannealbnd(IK_cost,initial_q(7*(k-1) + 1:7*k),cons_l,cons_u,options_sa);
+        % [temp, ~] = simulannealbnd(IK_cost,initial_q(7*(k-1) + 1:7*k),cons_l,cons_u,options_sa);
         [temp, f_] = fmincon(IK_cost, initial_q(7*(k-1) + 1:7*k), A_, [b(1:7) b(15:21)], [], [], [], [], [], options);
         f = f + f_;
         theta_optim(7*(k-1) + 1:7*k) = temp;
@@ -36,6 +36,7 @@ function [theta,f] = IK(a, pose_des, initial_q)
     theta = theta_optim;
     
     theta = reshape(theta,[],input.n_arms);
+    
     function cost = IK_cost_(theta,i)
         if (i==1)
             theta = [theta zeros(1,7)];

@@ -514,7 +514,6 @@ classdef RTBPlot
             
             n = 20;
             theta = (0:n)/n*2*pi;
-            
             RTBPlot.draw_shape(ax, r, extent, color, offset, theta, varargin{:});
         end
         
@@ -565,10 +564,10 @@ classdef RTBPlot
             z = z + offset(3);
             
             % walls of the shape
-            surf(x,y,z, 'FaceColor', color, 'EdgeColor', 'none', varargin{:})
+            surf(x,y,z, 'FaceColor', color, 'EdgeColor', 'none', varargin{:}, 'FaceAlpha',facealpha)
             
             % put the ends on
-            patch(x', y', z', color, 'EdgeColor', 'none', varargin{:});
+            patch(x', y', z', color, 'EdgeColor', 'none', varargin{:}, 'FaceAlpha',facealpha);
         end
         
         function create_floor(opt)
@@ -715,6 +714,7 @@ classdef RTBPlot
             
             % misc
             opt.movie = [];
+            opt.facealpha = 1;
             
             % build a list of options from all sources
             %   1. the M-file plotbotopt if it exists

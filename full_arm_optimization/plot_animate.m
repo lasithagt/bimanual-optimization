@@ -6,7 +6,7 @@ function plot_animate(x, input, data_file)
     % define the dual arm robot
     alpha  = [pi/2 -pi/2 -pi/2 0 pi/2 -pi/2 0];
     offset = [0,0,0,-pi/2,0,-pi/2,0];
-    d      = [0*x(5) 0*x(8) x(7) 0 0 0];
+    d      = [x(5) 0*x(8) x(7) 0 0 0];
     a      = [0 0 0 x(8) 0 0 0];
     tool   = input.tool;
 
@@ -39,10 +39,17 @@ function plot_animate(x, input, data_file)
     
     T = zeros(4,4,2); T(:,:,1) = input.T_L; T(:,:,2) = input.T_R;
     for k = 1:input.n_arms
-        rb                                  = FK_exp(x(5:end), T(:,:,k));
-        [temp_t]                            = IK_SE3(rb, pd(:,:,:,k));
+        % rb                                  = FK_exp(x(5:end), T(:,:,k));
+        
+        [Slist, M]                          = FK_exp_MR(x(5:end), T(:,:,k));                                  
+        [temp_t]                            = IK_SE3_MR(Slist, M, pd(:,:,:,3-k));
+
+        % [temp_t]                            = IK_SE3(rb, pd(:,:,:,k));
+        
         theta(input.n_links*(k-1)+1:input.n_links*k,:)  = temp_t;
-        pa(:,:,:,k)                         = fkine(rb, theta(input.n_links*(k-1)+1:input.n_links*k,:));
+        % pa(:,:,:,k)                         = fkine(rb, theta(input.n_links*(k-1)+1:input.n_links*k,:));
+        pa(:,:,:,k)                         = FK_SE3(M, Slist, theta(input.n_links*(k-1)+1:input.n_links*k,:)); 
+
     end
     
     for j = 1:m
@@ -55,7 +62,7 @@ function plot_animate(x, input, data_file)
     
     % Plot both robots together
     fig = figure(1);
-    ws = [-8 8 -18 5 -4 7];
+    ws = [-10 10 -8 15 -4 7];
     myVideo = VideoWriter('Videos/myfile.avi');
     myVideo.FrameRate = 15;  % Default 30
     myVideo.Quality = 50;    % Default 75

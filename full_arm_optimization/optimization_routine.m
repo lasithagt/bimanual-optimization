@@ -19,7 +19,7 @@ global input
 
 %% Data Structure Generation
 
-m       = 5;      % Number of discrete points along trajectory
+m       = 50;      % Number of discrete points along trajectory
 n_links = 7;      % Number of revolute joints
 d_var   = 8;
 n_arms  = 2;
@@ -30,14 +30,45 @@ data_file = 'Data/name_writing_sticky_note.mat';
 % data_file = 'Data/name_writing.mat';
 des_poses = trajectory_pose_read(data_file, m);
 
+data_file = {'Data/path_tracking_new_pp.mat', 'Data/soldering_new_pp.mat', 'Data/suturing_new_pp.mat'};
+% data_file = { 'Data/path_tracking_new_pp.mat'};
+
+des_poses = [];
+% linearly connect end and start points of each data file
+for i = 1:length(data_file)
+    des_poses_temp = trajectory_pose_read(data_file{i}, m);
+    
+    first_point = des_poses_temp(:,:,1,:);
+    
+    % joint these two points by linear interpolation
+    if (i > 1)
+        for j = 1:2
+            traj = CartesianTrajectory(first_point(:,:,:,j), last_point(:,:,:,j), 1, 10, 3);
+            for k = 1:length(traj)
+                transition(:,:,k,j) = traj{k};
+            end
+        end
+    des_poses = cat(3, des_poses, transition);
+    end
+    
+    last_point = des_poses_temp(:,:,end,:);
+   
+    des_poses = cat(3, des_poses, des_poses_temp);
+end
+% create dummy data points for testing
+% des_poses = zeros(4,4,1,2);
+
+m  = size(des_poses,3);
+
+
 % create dummy data points for testing
 % des_poses = zeros(4,4,1,2);
 
 pd = des_poses;       % Trajectory points
 
 % define joint limits
-q_min = [-pi,-pi, -pi/2,-pi,-3*pi/4, -3*pi/4,-3*pi/4];
-q_max = [ pi, pi,  pi/2, pi, 3*pi/4, 3*pi/4, 3*pi/4];
+q_min = [-pi,-pi/3, -pi/2,-pi,-3*pi/4, -3*pi/4,-3*pi/4];
+q_max = [ pi, pi/3,  pi/2, pi, 3*pi/4, 3*pi/4, 3*pi/4];
 
 input.m       = m;
 input.n_links = n_links;
@@ -49,9 +80,9 @@ input.q_max   = q_max;
 T_L = eye(4);
 T_R = eye(4);
 
-T_R(1:3,1:3) = roty(-pi/2)*rotx(-1*pi/4);
+T_R(1:3,1:3) = roty(-pi/2)*rotx(-pi/3);
 T_R(1:3,end) = [3;-12;2];
-T_L(1:3,1:3) = roty(pi/2)*rotx(-1*pi/4);
+T_L(1:3,1:3) = roty(pi/2)*rotx(-pi/3);
 T_L(1:3,end) = [-3;-12;2];
 % T_R(1:3,end) = [0.5;-12;3];
 % T_L(1:3,end) = [-0.5;-12;3];
@@ -78,13 +109,17 @@ func_vec     = @(X)cost_function_vec(X, input);
 %% Constraints for physical feasibility 
 
 init_a   = [2.4354  -10.2294    0.7530    1.4584    1.4269         0    4.1412    3.9466]; 
+init_a   = [2.4354  -10.2294    pi/2    0*pi/2    1.4269         0    4.1412    3.9466]; 
+init_a   = [2.9980 -5.0025 1.5708 pi/3 0.0461 0.5000 6.0000 5.9964];
+init_a   = [2.5371    6.5860    1.5708    0.7953    2.5173    0.5000    4.0102    3.0349];
+
 % % Constraints for physical feasibility 
-a_min    = [0 -15 0.0 0.0 0 0 0 0.1];
-a_max    = [5 -10 pi/2 pi/2 2 0 6 6];
+a_min    = [0 -10 pi/2 0.0 0 0.5 0.5 0.5];
+a_max    = [4 10 pi/2 pi/2 6 0.5 6 6];
 A        = [eye(d_var); -eye(d_var)];
 b        = [a_max'; a_min'];
-global DebugLevel;
-DebugLevel = 1;
+% global DebugLevel;
+% DebugLevel = 1;
 
 % use fmincon or sa to solve to get a prior solution for the design
 
@@ -94,10 +129,16 @@ DebugLevel = 1;
 
 %% Simulated Annealing
 % define a function in SA to generate samples
+optim = 0;
 rng default
-options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz','InitialTemperature',10,'MaxIterations',30);
-optim_X     = simulannealbnd(func_INVSE3_MR,init_a,a_min,a_max,options_sa);
-% optim_X = init_a;
+options_sa  = optimoptions('simulannealbnd','Display','iter','TemperatureFcn','temperatureboltz', ...
+    'InitialTemperature',500,'MaxIterations',100);
+
+if (optim==1)
+    optim_X     = simulannealbnd(func_INVSE3_MR,init_a,a_min,a_max,options_sa);
+else
+    optim_X     = init_a;
+end
 
 save('robot.mat','input');
 % input = update_input_struct(optim_X, input);
@@ -115,107 +156,15 @@ save('Data/robot_temp.mat','input');
 
 % animate the results.
 input = update_input_struct(optim_X, input);
-plot_animate(optim_X, input, data_file);
+plot_animate(optim_X, input, data_file{1});
 
 % optimization for dexterity while maintaining the positional constraints. 
 t_init = [0.5;0.5;0.5;0.5];
 lq     = [theta(:)', optim_X];
 
-% J  = J_(lq);
-% v  = pinv(J(1:2,1:4)') * t_init;
-% x  = [lq v'];
-
-%% Get the partials from implicit constraints
-[M_mat_u, M_mat_uu] = M_u(lq);  % Dyanmic Equation
-[fk_u, fk_uu]       = FK_u(lq); % End effector point (pose)
-
-fk_uu_pos           = fk_uu;
-ind_p               = [];
 
 
-%% Matrix Computation (formulation as a quadratic problem)
-% Matrix with partials
-
-% A_fwk = squeeze(2.*tmprod(fk_uu, func_vec(lq)', 1)) + 2.*tmprod(fk_u', fk_u', 2);
-A_fwk = fk_u;
-
-A     = A_fwk;
-b     = zeros(8,1);% zeros(8,1);
-
-% Using quadprogramming to get the increment with joint limits
-% quadprog
-H       = eye(10); 
-f       = [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.1];
-Aeq     = -[1 0 0 0 0 0 0 0 zeros(1,2);-1 0 0 0 0 0 0 0 zeros(1,2);0 1 0 0 0 0 0 0 zeros(1,2);0 -1 0 0 0 0 0 0 zeros(1,2);0 0 1 0 0 0 0 0 zeros(1,2);0 0 -1 0 0 0 0 0 zeros(1,2);0 0 0 1 0 0 0 0 zeros(1,2);0 0 0 -1 0 0 0 0 zeros(1,2);...
-            0 0 0 0 1 0 0 0 zeros(1,2);0 0 0 0 -1 0 0 0 zeros(1,2);0 0 0 0 0 1 0 0 zeros(1,2);0 0 0 0 0 -1 0 0 zeros(1,2);0 0 0 0 0 0 1 0 zeros(1,2);0 0 0 0 0 0 -1 0 zeros(1,2);0 0 0 0 0 0 0 1 zeros(1,2);0 0 0 0 0 0 0 -1 zeros(1,2)];
-beq     = -[(-pi/2)-lq(1);-((pi/2)-lq(1));(-pi/2)-lq(2);-((pi/2)-lq(2));(-pi/2)-lq(3);-((pi/2)-lq(3));(-pi/2)-lq(4);-((pi/2)-lq(4));...
-            0.5-lq(5);-(2-lq(5));0.5-lq(6);-(2-lq(6)); 0.5-lq(7);-(2-lq(7));0.5-lq(8);-(2-lq(8))];
-thresh  = 0.001;
-x       = [lq';v];
-
-% Run this infinity loop. To be on the manifold.
-while (1)
-    
-    % Take the partials with respect to pose
-    [fk_u, fk_uu]  = FK_u(x(1:8));
-    %     [M_u,  M_uu]  = M_u(x(1:8));
-    [M,g] = manip_grad(x(1:8),x(9:end));
-    A   = [fk_u zeros(7,2);g];
-
-    beq = -[(-pi/2)-x(1);-((pi/2)-x(1));(-pi/2)-x(2);-((pi/2)-x(2));(-pi/2)-x(3);-((pi/2)-x(3));(-pi/2)-x(4);-((pi/2)-x(4));...
-            0.5-x(5);-(2-x(5));0.5-x(6);-(2-x(6)); 0.5-x(7);-(2-x(7));0.5-x(8);-(2-x(8))];    
-     
-    % Quadratic Programming Problem
-    [dx, fval] = quadprog(H, f, Aeq, beq, A, b);
-    x          = x + dx;
-    %     A * dx;
-    %     x(9:end)' * M * x(9:end)
-    c          = cost_function(x, input);
-    
-    if (c > thresh)
-        break;
-    end
-    clf(gcf)
-    
-    % Display the current manipulator.
-    l = 0.05;
-    T_base_1 = SE3.Ry(pi/2);
-    T_base_2 = SE3.Ry(-pi/2)*SE3.Rz(-pi);
-    T_base_1.t = [l;-0.6;0];
-    T_base_2.t = [-l;-0.6;0];
-
-    L1 = Link('d', 0, 'a', x(5), 'alpha', 0);        
-    L2 = Link('d', 0, 'a', x(6), 'alpha', 0);
-    L3 = Link('d', 0, 'a', x(7), 'alpha', 0);
-    L4 = Link('d', 0, 'a', x(8), 'alpha', 0);
-    L5 = Link('d', 0, 'a', 0, 'alpha', 0);
-    L6 = Link('d', 0, 'a', 0, 'alpha', 0);
-    L7 = Link('d', 0, 'a', 0, 'alpha', 0);
-    
-    optim_arm_L = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'arm_L');
-    optim_arm_R = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'arm_R');
-
-    
-    optim_arm.fellipse(x(1:4)','2d')
-    optim_arm.plot(x(1:4)','workspace', 4*[-0.3 1.5 -1 1 -1 1.5], 'noshadow','noarrow', 'view',[-90 90], 'tile1color',[0.9 0.9 0.9],'delay',0.01);
-    
-    for i = 1:size(q,1)
-        optim_arm_L.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[0 60],'tile1color',[10 1 1],'delay',0.0001)
-        hold on
-        q(i,1) = -q(i,1); q(i,3) = -q(i,3); q(i,5) = -q(i,5); q(i,7) = -q(i,7);
-        optim_arm_R.plot(q(i,:), 'noshadow','workspace',[-1 1 -1 1 -1 1],'noarrow', 'view',[0 60],'tile1color',[10 1 1],'delay',0.0001)
-    end
-    
-    hold on
-    plot(2,1,'r*')
-    
-end
 
 
-%% Plotting
-
-% Use transformations to get rid of joint limits
-
-% Run in a loop while it converges
 
 

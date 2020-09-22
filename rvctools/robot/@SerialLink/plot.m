@@ -404,13 +404,13 @@ function h = create_robot(robot, opt)
                 Ainv = inv(links(L-1).A(0));
                 t = Ainv.t;
                 if t(1) ~= 0
-                    RTBPlot.cyl('x', 0.5*s, [0 t(1)], opt.linkcolor, [], 'Parent', h.link(L));
+                    RTBPlot.cyl('x', s, [0 t(1)], opt.linkcolor, [], 'Parent', h.link(L));
                 end
                 if t(2) ~= 0
-                    RTBPlot.cyl('y', 0.5*s, [s t(2)], opt.linkcolor, [t(1) 0 0], 'Parent', h.link(L));
+                    RTBPlot.cyl('y', s, [s t(2)], opt.linkcolor, [t(1) 0 0], 'Parent', h.link(L));
                 end
                 if t(3) ~= 0
-                    RTBPlot.cyl('z', 0.5*s, [s t(3)], opt.linkcolor, [t(1) t(2) 0], 'Parent', h.link(L));
+                    RTBPlot.cyl('z', s, [s t(3)], opt.linkcolor, [t(1) t(2) 0], 'Parent', h.link(L));
                 end
                 %line([0 t(1)]', [0 t(2)]', [0 t(3)]', 'Parent', h.link(L));
             end
@@ -471,7 +471,9 @@ function h = create_robot(robot, opt)
         else
             extra = {};
         end
-        h.wrist = trplot(eye(4,4), 'labels', upper(opt.wristlabel), ...
+        RR_ = eye(4);
+        RR_(1:3,1:3) = roty(pi/2);
+        h.wrist = trplot(RR_, 'labels', upper(opt.wristlabel), ...
                 'rgb', 'length', opt.wristlen*s, extra{:});
 
     else

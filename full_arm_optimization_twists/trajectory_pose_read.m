@@ -36,12 +36,12 @@ function poses = trajectory_pose_read(data_file, m)
     end
         
     % For testing purposes
-%     plot_data(poses, numsen, n_poses)
+    plot_data(poses, numsen, n_poses)
     
 end
 
 function plot_data(poses, numsen, n_data) 
-    figure(1)
+    figure(10)
     % close all;
     line = {'r-','k-'};
     q_ = {'r','b'};
@@ -50,14 +50,14 @@ function plot_data(poses, numsen, n_data)
     for i=1:numsen
         p = reshape(poses(1:3,end,:,i),3,[]);
         
-        plot3(p(1,:), p(2,:), p(3,:),line{i})
+        plot3(p(1,:), p(2,:), p(3,:),line{i},'LineWidth',2)
         hold on
         for j=1:n_data
             if mod(j,r) == 0
 
                 quiver3(poses(1,end,j,i), poses(2,end,j,i), poses(3,end,j,i), ...
                     poses(1,1:3,j,i)*[0 0 1]', poses(2,1:3,j,i)*[0 0 1]',...
-                    poses(3,1:3,j,i)*[0 0 1]',q_{i},'LineWidth',2,'MaxHeadSize',0.5)
+                    poses(3,1:3,j,i)*[0 0 1]',q_{i},'LineWidth',1.5,'MaxHeadSize',0.5)
 
                 hold on
             end
