@@ -22,7 +22,6 @@ des_poses = [];
 % linearly connect end and start points of each data file
 for i = 1:length(data_file)
     des_poses_temp = trajectory_pose_read(data_file{i}, m);
-    
     first_point = des_poses_temp(:,:,1,:);
     
     % joint these two points by linear interpolation
@@ -41,8 +40,6 @@ for i = 1:length(data_file)
     des_poses = cat(3, des_poses, des_poses_temp);
 end
 % create dummy data points for testing
-% des_poses = zeros(4,4,1,2);
-
 m  = size(des_poses,3);
 close all
 plot_trajectory(des_poses, 2, m) 
@@ -82,26 +79,21 @@ input.curr_q = zeros(n_links, m, n_arms);
 func           = @(X)cost_function_dual(X, input);
 func_INVJAC    = @(X)cost_function_dual_INVJAC(X);
 func_INVSE3    = @(X)cost_function_dual_INVSE3(X);
-func_INVSE3_ga = @(X,input)cost_function_dual_INVSE3_ga(X,input);
+% func_INVSE3_ga = @(X,input)cost_function_dual_INVSE3_ga(X,input);
 
-func_vec     = @(X)cost_function_vec(X, input);
+func_vec       = @(X)cost_function_vec(X, input);
 
 w = [0 0 1 0 1 0 0 1 0];
 q = zeros(1,9);
 
 init_a =  [-0.590711803586636, 0.849801739227642, 0.098539770795573,...
-    -0.394528718057018, -0.313611137080781, -0.983279256066311,...
-    0.526447520746619, -3.769026340884774, -0.845121971642268,...
-    2.784223288127604, 2.042301014735812,-2.668835207631538,...
-    -2.468384146280601, -2.320930273772749, 1.358513157641732,...
-    2.379801527475640, 1.867896703390760, 2.406623292597008,...
-    10,-12,2];
+           -0.394528718057018, -0.313611137080781, -0.983279256066311,...
+            0.526447520746619, -3.769026340884774, -0.845121971642268,...
+            2.784223288127604, 2.042301014735812,-2.668835207631538,...
+            -2.468384146280601, -2.320930273772749, 1.358513157641732,...
+            2.379801527475640, 1.867896703390760, 2.406623292597008,...
+            10,-12,2];
 
-% init_a  = [w,q];
-% init_a = [normalize([0.9592, -0.6942, -0.7847],'norm'), -0.3658, 0.3027, -0.9455, normalize([0.8874, -0.9945, 0.7926],'norm'),...
-%     2.784223288127604, 2.042301014735812,-2.668835207631538,-2.468384146280601, -2.320930273772749, 1.358513157641732, 2.379801527475640, 1.867896703390760, 2.406623292597008,10,-12,2];
-% init_a = [   0.9998   -0.3625   -0.1059   -0.0466   -0.3016   -0.8999    0.9484   -0.6214    0.5310    2.1708    2.1640...
-%    -0.5660   -0.2004   -2.1376    1.9171    2.0512    0.9997    1.0395    4.9142   -7.3349    4.9978];
 
 %% Constraints for physical feasibility 
 a_min    = [-ones(1,9) -5*ones(1,9) 3 -12 0];
@@ -114,6 +106,7 @@ a_max    = [ones(1,9) 5*ones(1,9) 10 -6 5];
 % options_cp  = optimoptions('fmincon','Display','iter','Algorithm','sqp');
 % optim_X  = fmincon(func_INVSE3, init_a, A, b,[],[],[],[],[],options_cp)
 % define a function in SA to generate samples
+
 global history iteration
 history = [];
 iteration = [];

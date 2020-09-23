@@ -13,5 +13,4 @@ function [pose_K] = FK_SE3(Slist, M, q)
         pose_K(:,:,i)  = FKinSpace(Slist, M, theta(:,i));
     end
    
-    
 end
