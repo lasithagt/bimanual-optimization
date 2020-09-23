@@ -1,3 +1,5 @@
 [submodule "full_arm_optimization/ModernRobotic"]
 	path = full_arm_optimization/ModernRobotic
 	url = https://github.com/NxRLab/ModernRobotics.git
+
+	
