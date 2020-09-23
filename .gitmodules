@@ -1,5 +1,3 @@
-[submodule "full_arm_optimization/ModernRobotic"]
-	path = full_arm_optimization/ModernRobotic
-	url = https://github.com/NxRLab/ModernRobotics.git
-
-	
+[submodule "full_arm_optimization_twists/ModernRobotics"]
+	path = full_arm_optimization_twists/ModernRobotics
+	url = git@github.com:lasithagt/ModernRoboticsCpp.git
