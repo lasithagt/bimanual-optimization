@@ -1,6 +1,6 @@
 [submodule "full_arm_optimization_twists/ModernRobotics"]
 	path = full_arm_optimization_twists/ModernRobotics
-	url = git@github.com:lasithagt/ModernRoboticsCpp.git
+	url = https://github.com/lasithagt/ModernRobotics.git
 [submodule "npy-matlab"]
 	path = npy-matlab
 	url = git@github.com:lasithagt/npy-matlab.git
