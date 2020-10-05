@@ -1,4 +1,5 @@
-
+% w  - axis vectors
+% q  - deistance vector to each joint axes
 function [Slist, M1] = manipulator_exp(w, q, g_st)
     
     global input
@@ -26,8 +27,9 @@ function [Slist, M1] = manipulator_exp(w, q, g_st)
     %     w6 = rotz(pi/2) * w5;                  q6 = Q + R * [q{3}(1);q{3}(2);q{3}(3)];
     %     w7 = rotx(pi/2) * w5;                  q7 = Q + R * [q{3}(1);q{3}(2);q{3}(3)+input.tool];
     
-    w6 = R * rotz(pi/2) * [w{3}(1);w{3}(2);w{3}(3)];   q6 = Q + R * [q{3}(1);q{3}(2);q{3}(3)];
-    w7 = R * rotx(pi/2) * [w{3}(1);w{3}(2);w{3}(3)];   q7 = Q + R * [q{3}(1);q{3}(2);q{3}(3)+input.tool];
+    w6 = R * rotx(pi/2) * [w{3}(1);w{3}(2);w{3}(3)];   q6 = Q + R * [q{3}(1);q{3}(2);q{3}(3)];
+
+    w7 = R * roty(0) * [w{3}(1);w{3}(2);w{3}(3)];   q7 = Q + R * [q{3}(1);q{3}(2);q{3}(3)];
     
     h = 0;
     S1 = ScrewToAxis(q1,w1, h);
@@ -45,16 +47,11 @@ function [Slist, M1] = manipulator_exp(w, q, g_st)
     %     M_R    = ProjectToSO3(MatrixLog3(VecToso3(M_R')));
     
     
-    rotm = axang2rotm([cross([0 0 1]', w7)' acos(dot(w7,[0 0 1]')/norm(w7))]);
-
-        
-    rot    = [0.3172    0.6939    0.6465;0.6190    0.3650   -0.6954;-0.7185    0.6207   -0.3137];
+    rot    = [1 0 0; 0 1 0; 0 0 1];
+    d      = zeros(3,1);
     
     M_R    = rot;
-    M      = RpToTrans(M_R, q{3}');
-    % M      = RpToTrans(M_R, q{3}');
+    M      = RpToTrans(M_R, d);
     M1     = g_st * M;
     
-    
-
 end

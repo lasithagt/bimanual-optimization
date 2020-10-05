@@ -1,0 +1,235 @@
+function TEST_FK_MODELS
+
+global input
+
+n_links = 7;       % Number of revolute joints
+n_arms  = 2;
+
+% define joint limits
+q_min = [-pi,3*pi/4, -pi/2,-pi,-3*pi/4, -3*pi/4,-3*pi/4];
+q_max = [ pi, 5*pi/4,  pi/2, pi, 3*pi/4, 3*pi/4, 3*pi/4];
+
+input.n_links = n_links;
+input.n_arms  = n_arms;
+input.q_min   = q_min;
+input.q_max   = q_max;
+
+x = [0, 0, 1,...
+     0, 1, 0,...
+     0, 0, 1,...
+     0, 0, 10*0.2025,...
+     0, 0, 10*(0.2025+0.42),...
+     0, 0, 10*(0.2025+0.42+0.4),...
+      3.2876, -7.4806, 3.5388];
+x = [0.3525    0.8470    0.9581,...
+         -0.4208    0.1685   -0.8550 ,...
+          0.4513    0.3423    0.8871,...
+         -0.7160    0.7745    5.7434,...
+          1.7637   -1.7036    6.2626,...
+         -0.6435    0.8234    8.5100,...
+          5.7270   -5.5765    6.7165];
+      
+  d1 =0.42; d2 = 0.40;
+	dh_kuka = [0        0           0       pi/2; ...
+	0        0           0      -pi/2;...
+	0        d1          0      pi/2;...
+	0        0           0       pi/2;...
+	0        d2          0       pi/2;...
+	0        0           0       pi/2;...
+	0        0           0       -pi/2];
+       dh_kuka(:,3) = dh_kuka(:,4);
+       dh_kuka(:,4) = dh_kuka(:,4) * 0;
+%% conversion from DH to POE
+POE_puma = DH2POE(dh_kuka,eye(4),eye(4),'RRRRRRR','std')
+T_L           = eye(4);
+T_L(1:3, 1:3) = roty(-pi/2);
+T_L(1:3, end) = [-3.2876, -7.4806, 3.5388];
+
+T_R           = eye(4);
+T_R(1:3, 1:3) = [1 0 0;0 -1 0;0 0 1] * T_L(1:3,1:3);
+T_R(1:3, end) = [3.2876 ;-7.4806; 3.5388];
+
+%% kuka manipulator description
+W1 = [0 0 1]'; W2 = [0 -1 0]';
+w1 = W1; q1 = [0;0;0.2025];
+w2 = W2; q2 = [0;0;0.2025];
+w3 = W1; q3 = [0;0;0.2025];
+w4 = -W2; q4 = [0;0;0.2025+0.42];
+w5 = W1; q5 = [0;0;0.2025+0.42];
+w6 = W2; q6 = [0;0;0.2025+0.42+0.4];
+w7 = W1; q7 = [0;0;0.2025+0.42+0.4+0.126];
+
+g_st = [1 0 0 0;0 1 0 0;0 0 1 0.2025+0.42+0.4+0.126;0 0 0 1];
+
+h = 0;
+S1 = ScrewToAxis(q1,w1, h);
+S2 = ScrewToAxis(q2,w2, h);
+S3 = ScrewToAxis(q3,w3, h);
+S4 = ScrewToAxis(q4,w4, h);
+S5 = ScrewToAxis(q5,w5, h);
+S6 = ScrewToAxis(q6,w6, h);
+S7 = ScrewToAxis(q7,w7, h);
+
+S        = [S1, S2, S3, S4, S5, S6, S7];
+Slist_K  = S;
+
+%% define twists
+w = {x(1:3),x(4:6),x(7:9)};
+for i =1:3
+   w{i} = w{i} ./ norm(w{i});
+end
+q = {x(10:12),x(13:15),x(16:18)};
+
+
+%% manipulator left
+temp = T_L;
+t    = temp;
+t(1:3, 4)      = [0 0 0]';
+[Slist_L, ~]   = manipulator_exp(w, q, t);
+
+Slist_L(4:6,8) = 0*Slist_L(4:6,7);
+
+% Slist_K(:,8)  = 0*Slist_K(:,7);
+
+% DH_L         = POE2DH(Slist_K);
+% POE_puma     = DH2POE(DH_L(2:end-1,:), eye(4),eye(4),'RRRRRRR','std');
+DH_L_        = POE2DH(Slist_L);
+DH_L         = DH_L_(2:end-1,:);
+
+alpha_L  = DH_L(:,3);
+offset_L = DH_L(:,1);
+d_L      = DH_L(:,2);
+a_L      = DH_L(:,4);
+
+
+L1_L = Link('d', d_L(1), 'a', a_L(1), 'alpha', alpha_L(1),'offset', offset_L(1));        
+L2_L = Link('d', d_L(2), 'a', a_L(2), 'alpha', alpha_L(2),'offset', offset_L(2));
+L3_L = Link('d', d_L(3), 'a', a_L(3), 'alpha', alpha_L(3),'offset', offset_L(3));
+L4_L = Link('d', d_L(4), 'a', a_L(4), 'alpha', alpha_L(4),'offset', offset_L(4));
+L5_L = Link('d', d_L(5), 'a', a_L(5), 'alpha', alpha_L(5),'offset', offset_L(5));
+L6_L = Link('d', d_L(6), 'a', a_L(6), 'alpha', alpha_L(6),'offset', offset_L(6));
+L7_L = Link('d', 0 * d_L(7), 'a', 0 * a_L(7), 'alpha', 0 * alpha_L(7),'offset', 0 * offset_L(7));
+L8_L = Link('d', DH_L_(end,2), 'a', 0, 'alpha',0,'offset', DH_L_(end,1));
+
+%% manipulator right
+temp = T_R;
+t = temp;
+t(1:3, 4) = [0 0 0]';
+[Slist_R, ~]  = manipulator_exp(w, q, t);
+Slist_R(:,8)  = 0 * Slist_R(:,7);
+
+DH_R_         = POE2DH(Slist_R);
+DH_R          = DH_R_(2:end-1,:);
+
+alpha_R  = DH_R(:,3);
+offset_R = DH_R(:,1);
+d_R      = DH_R(:,2);
+a_R      = DH_R(:,4);
+
+
+L1_R = Link('d', d_R(1), 'a', a_R(1), 'alpha', alpha_R(1),'offset', offset_R(1));        
+L2_R = Link('d', d_R(2), 'a', a_R(2), 'alpha', alpha_R(2),'offset', offset_R(2));
+L3_R = Link('d', d_R(3), 'a', a_R(3), 'alpha', alpha_R(3),'offset', offset_R(3));
+L4_R = Link('d', d_R(4), 'a', a_R(4), 'alpha', alpha_R(4),'offset', offset_R(4));
+L5_R = Link('d', d_R(5), 'a', a_R(5), 'alpha', alpha_R(5),'offset', offset_R(5));
+L6_R = Link('d', d_R(6), 'a', a_R(6), 'alpha', alpha_R(6),'offset', offset_R(6));
+L7_R = Link('d', 0 * d_R(7), 'a', 0 *a_R(7), 'alpha', 0 * alpha_R(7),'offset', 0 * offset_R(7));
+L8_R = Link('d', DH_R_(end,2), 'a', 0, 'alpha', 0,'offset', DH_R_(end,1));
+
+
+%% visulaizing model
+L = T_L; 
+L(1:3, 1:3) = eye(3);
+R = T_R; 
+R(1:3, 1:3) = eye(3);
+
+q = [pi; -2.789*0; 0; 0; 0; 0; 0];
+% q = -ones(7,1);
+q_L = q; %offset_L;
+q_R = -q;
+% q_L(1) = pi/4;
+% q_R(1) = -pi/4;
+% q(1) = pi/4; q(2) = pi/2;
+
+% % FK_SE3(Slist_L, temp, q) 
+t_tool_L = DH ([DH_L_(end,1:2),0,0], 'std');
+b_tool_L = DH ([DH_L_(1,:),0,0], 'std');
+
+t_tool_R = DH ([DH_R_(end,1:2),0,0], 'std');
+b_tool_R = DH ([DH_R_(1,:),0,0], 'std');
+
+
+RR = T_R;
+RR(1:3, 1:3) = rotz(pi);
+mini_chain_L = SerialLink([L1_L L2_L L3_L L4_L L5_L L6_L L7_L L8_L], 'name', 'robot_L','base', L * b_tool_L);
+mini_chain_R = SerialLink([L1_R L2_R L3_R L4_R L5_R L6_R L7_R L8_R], 'name', 'robot_R','base', RR * b_tool_R);
+
+animated_L   = L * b_tool_L * mini_chain_L.A(1:7, q_L).T * t_tool_L
+M_L = b_tool_L * mini_chain_L.A(1:7, zeros(7,1)).T * t_tool_L ;
+t = acos(dot([0,0,1], Slist_L(1:3,7)'))
+M_L(1:3, 1:3) = axang2rotm([cross([0,0,1], Slist_L(1:3,7)') t]);
+M_L(1:3, end) = x(16:18)';
+analytical_L  = FK_SE3(Slist_L, M_L, L, q_L)
+DH_L(end,:) = DH_L(end,:)*0; 
+fkDH_puma_std = L * fkDH(DH_L, b_tool_L, t_tool_L, q_L, 'RRRRRRR','std')
+
+
+DH2POE(DH_puma_std,H_base,H_tool,'RRRRRR','std')
+
+animated_R   = RR * b_tool_R * mini_chain_R.A(1:7, q_R).T * t_tool_R
+M_R =  b_tool_R * mini_chain_R.A(1:7, zeros(7,1)).T * t_tool_R;
+analytical_R = FK_SE3(Slist_R, eye(4), RR, 0*q_R) * M_R
+
+%% TEST IK SOLVER
+pd =  [-0.3738    0.9224    0.0971    0.5671;
+       0.9275    0.3704    0.0513   -0.7106;
+       0.0113    0.1092   -0.9940    0.0893;
+       0         0         0    1.0000];
+       
+% pd(1:3,1:3) = roty(0/10) * eye(3);
+guess_init_L = [pi/5 -pi/3 pi/2 pi/3 pi/3 0 0]';
+
+temp = T_L;
+t    = temp;
+t(1:3, 4)      = [0 0 0]';
+ M_L = t * M_L;
+ [q_ret]      = IK_SE3(Slist_L(:,1:end-1), M_L, L,  eye(4), guess_init_L);
+
+ FK_SE3(Slist_L,M_L, L, q_ret)
+
+[q_ret_R] = IK_SE3(Slist_R(:,1:end-1), M_R, RR, pd, -guess_init_L);
+FK_SE3(Slist_R, eye(4), RR, q_ret_R) * M_R 
+
+fkDH_puma_std = L * fkDH(DH_L(1:4,:), b_tool_L, t_tool_L, q_L(1:4), 'RRRRRRR','std')
+
+figure(1)
+ws = 1.5 * [-20 20 -18 10 -10 20];
+mini_chain_L.plot([q_L;0]', 'noshadow','workspace',ws, 'view',[-165 45],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1.3,'scale',0.7,'wrist','jointcolor',[0.5 0.5 0.5],'linkcolor',[0.7 0.0 0.0])
+hold on
+mini_chain_R.plot([q_R;0]', 'noshadow','workspace',ws, 'view',[-165 45],'tile1color',[10 1 1],'delay',0.01,'jointdiam',1.3,'scale',0.7,'wrist','jointcolor',[0.5 0.5 0.5],'linkcolor',[0.7 0.0 0.0])
+
+
+end
+
+
+
+
+
+
+% %% Test
+% POE_puma = [0         0         0         0         0         0         0;
+%              0   -1.0000   -1.0000         0   -1.0000         0         0;
+%         1.0000    0.0000    0.0000    1.0000    0.0000    1.0000         0;
+%              0         0         0   -0.1500    0.4318   -0.1500    0.4521;
+%              0         0   -0.0000   -0.4521   -0.0000   -0.4521   -0.1500;
+%              0         0   -0.4318         0   -0.4521         0    0.4318];
+%          
+% DH_puma_std =   [0      0       pi/2    0;
+%                  0       0       0       0.4318;
+%                  0       0.15    -pi/2   0.0203;
+%                  0       0.4318  pi/2    0;
+%                  0       0       -pi/2   0;
+%                  0       0       0       0];
+%          
+% fkDH_puma_std = fkDH(DH_puma_std, eye(4), eye(4), zeros(6,1), 'RRRRRR','std')
+% fkPOE_puma    = fkPOE(POE_puma, zeros(6,1))

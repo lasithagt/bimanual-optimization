@@ -1,0 +1,52 @@
+%% Vector function for IK
+function [q_ret] = IK_SE3(Slist, M, TR,  new_cart_pose) 
+    global input
+    poses = new_cart_pose;
+    p     = reshape(poses,4,4,[]);
+    
+    n = size(p,3);
+    
+    q_ret = zeros(7,n);
+    eomg = 0.01; ev = 0.001;
+    
+    init_n = 20;
+    init_err = zeros(1, init_n);
+    theta_init = cell(1, init_n);
+    
+    for i = 1:n
+        T          = p(:,:,i);
+        %% use random start at the begining to get a better configuration
+        if i == 1
+            for j = 1:init_n
+                guess = zeros(7,1) + 0.1*rand(7,1);
+                [theta_hat, err]  = IKinSpace_modified(Slist, M, TR, T, guess, eomg, ev);
+                init_err(j)       = err;
+                theta_init{j}     = theta_hat;
+            end
+            [~, idx]  = min(init_err);
+            theta_hat = theta_init{idx};
+        else
+                            [theta_hat, err]  = IKinSpace_modified(Slist, M, TR, T, guess, eomg, ev);
+
+        end
+        
+        
+        %% impose joint limits
+        theta_hat = sign(theta_hat) .* mod(abs(theta_hat), 2*pi);
+        mask_min = input.q_min' > theta_hat;
+        theta_hat(mask_min) = input.q_min(mask_min)';
+        
+        mask_max = input.q_max' < theta_hat;
+        theta_hat(mask_max) = input.q_max(mask_max)';
+
+        q_ret(:,i) = theta_hat;
+        guess      = theta_hat;
+    end
+    
+end
+
+
+
+
+
+

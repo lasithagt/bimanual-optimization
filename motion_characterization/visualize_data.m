@@ -6,8 +6,8 @@ clear;
 % Load the data from a mat file
 calibration = 1;
 if (calibration)
-    cali_data = readNPY('raw_data/EM_tracker/calibration_data_path_tracking.npy');
-    ws_d      = rosbag('raw_data/EM_tracker/path_tracking.bag');
+    cali_data = readNPY('raw_data/EM_tracker/calibration_data_suturing_2.npy');
+    ws_d      = rosbag('raw_data/EM_tracker/suturing.bag');
 
 
     em_data = select(ws_d,'Topic','/EMdata');
@@ -18,7 +18,7 @@ if (calibration)
     numsen  = 2;
     n_data  = size(em_,1);
 
-    em_data_mat = zeros(7,size(em_,1),numsen);
+    em_data_mat = zeros(6, size(em_,1),numsen);
 
     for i = 1:numsen
         e_temp = vertcat(em_(:,i+1).Pose);
@@ -28,25 +28,23 @@ if (calibration)
         em_data_mat(2,:,i) = horzcat(e_temp_pos.Y);
         em_data_mat(3,:,i) = horzcat(e_temp_pos.Z);
         
-        % since using eul
+        % since using eul (ZYX convention)
         em_data_mat(4,:,i) = horzcat(e_temp_ori.Z);
         em_data_mat(5,:,i) = horzcat(e_temp_ori.Y);
         em_data_mat(6,:,i) = horzcat(e_temp_ori.X);
-        em_data_mat(7,:,i) = horzcat(e_temp_ori.W);
+        % em_data_mat(7,:,i) = horzcat(e_temp_ori.W);
     end
 
-
     % Extract cal data
-
     % Adjusted data
-    em_data_adj = zeros(6,n_data,numsen);
+    em_data_adj    = zeros(6,n_data,numsen);
     em_tracker_vel = zeros(3, n_data, numsen);
 
-    tool_tip_cal = {};
+    tool_tip_cal = cell(1, numsen);
     for i = 1:numsen
 
         sensor_i_data = cali_data(:,:,i);
-        pos_xyz = sensor_i_data(1:3,:)';
+        pos_xyz       = sensor_i_data(1:3,:)';
         %     temp = sensor_i_data(4,:);
         %     sensor_i_data(4:end-1,:) = sensor_i_data(5:end,:);
         %     sensor_i_data(end,:) = temp;
@@ -61,18 +59,20 @@ if (calibration)
         % Extract position and angular data and get the tool tip position
         em_data_mat_pos = em_data_mat(1:3,:,i)';
         % em_data_mat_ang = quat2eul(em_data_mat(4:end,:,i)');
-        em_data_mat_ang = em_data_mat(4:end-1,:,i)';
+        em_data_mat_ang = em_data_mat(4:end,:,i)';
         
         % global rotation matrix
-        rotm_global = rotx(-pi) * rotz(pi);
-
+        rotm_global = rotx(-pi) * rotz(pi/2); 
+        rotm_global = roty(-pi) * rotz(-pi/2);
+        
         for k = 1:n_data
             em_data_adj(1:3,k,i)   = em_data_mat_pos(k,:)' + eul2rotm(em_data_mat_ang(k,:),'ZYX') * tool_tip_cal{i}(1:3)';
-            temp                   = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [1 0 0]';
+            % temp                   = eul2rotm(em_data_mat_ang(k,:),'ZYX') * [1 0 0]';
+            temp                   = em_data_mat_ang(k,:)';
             em_data_adj(4:end,k,i) = temp;
             
             em_data_adj(1:3,k,i)   = rotm_global * em_data_adj(1:3,k,i);
-            em_data_adj(4:end,k,i) = rotm_global * em_data_adj(4:end,k,i);
+            em_data_adj(4:end,k,i) = rotm2eul(rotm_global * eul2rotm(em_data_adj(4:end,k,i)', 'ZYX'), 'ZYX');
         end
         
         % save velocity data

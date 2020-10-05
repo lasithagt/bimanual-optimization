@@ -14,13 +14,10 @@ function plot_data(em_data, is_animate)
     h2 = animatedline('Marker','.','Color','k');
 
 
-    xlabel('x position')
-    ylabel('y position')
-    zlabel('z position')
-
     grid on
     h = [h1, h2];
     
+ 
     for i = 1:numsen
         if (is_animate)
             for j=1:n_data
@@ -34,12 +31,19 @@ function plot_data(em_data, is_animate)
                 end
             end
         else
-            plot3(em_data(1,:,i), em_data(2,:,i), em_data(3,:,i),'.')
+            for j=1:n_data
+                em_data(4:end, j, i) = eul2rotm(em_data(4:end, j, i)', 'ZYX') * roty(pi/2) * [0 0 1]'; 
+            end
+            plot3(em_data(1,:,i), em_data(2,:,i), em_data(3,:,i), q_{i})
             quiver3(em_data(1,:,i),em_data(2,:,i),em_data(3,:,i), ...
                 em_data(4,:,i),em_data(5,:,i), em_data(6,:,i),q_{i}, 'LineWidth',0.5,'MaxHeadSize',0.05)
             hold on
             % axis([0 30 -10 10 -10 25])
         end
     end
+    
+    xlabel('x position')
+    ylabel('y position')
+    zlabel('z position')
     
 end

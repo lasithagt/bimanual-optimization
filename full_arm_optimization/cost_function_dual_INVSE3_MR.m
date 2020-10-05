@@ -1,3 +1,4 @@
+
 function F = cost_function_dual_INVSE3_MR(x)
     
     % OPTIMIZATIONROUTINE This function evaluates the overall objective function (F) for a

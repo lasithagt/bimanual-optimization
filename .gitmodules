@@ -4,3 +4,9 @@
 [submodule "npy-matlab"]
 	path = npy-matlab
 	url = git@github.com:lasithagt/npy-matlab.git
+[submodule "WSRender_V0.0"]
+	path = WSRender_V0.0
+	url = https://github.com/HamlynRobotics/WSRender_V0.0.git
+[submodule "ModernRobotics"]
+	path = ModernRobotics
+	url = https://github.com/lasithagt/ModernRobotics.git

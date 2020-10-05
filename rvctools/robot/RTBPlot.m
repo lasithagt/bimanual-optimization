@@ -564,10 +564,10 @@ classdef RTBPlot
             z = z + offset(3);
             
             % walls of the shape
-            surf(x,y,z, 'FaceColor', color, 'EdgeColor', 'none', varargin{:}, 'FaceAlpha',facealpha)
+            surf(x,y,z, 'FaceColor', color, 'EdgeColor', 'none', varargin{:})
             
             % put the ends on
-            patch(x', y', z', color, 'EdgeColor', 'none', varargin{:}, 'FaceAlpha',facealpha);
+            patch(x', y', z', color, 'EdgeColor', 'none', varargin{:});
         end
         
         function create_floor(opt)

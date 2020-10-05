@@ -1,5 +1,5 @@
 %% Vector function for FK
-function [pose_K] = FK_SE3(Slist, M, q) 
+function [pose_K] = FK_SE3(Slist, M, T, q) 
     global input
  
     if size(q,1)~=input.n_links 
@@ -10,7 +10,7 @@ function [pose_K] = FK_SE3(Slist, M, q)
     pose_K = zeros(4,4,size(theta,2));
     m = size(q,2);
     for i=1:m
-        pose_K(:,:,i)  = FKinSpace(Slist, M, theta(:,i));
+        pose_K(:,:,i)  = T * FKinSpace(M, Slist, theta(:,i));
     end
    
 end

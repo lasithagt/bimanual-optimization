@@ -1,6 +1,7 @@
 function [d, p_m, p_std, o_m, o_std] = data_post_process(data_file)
 
-    data = data_file;
+    data_ = load(data_file);
+    data  = data_.em_data_adj;
       
     %% take the mean of the position 
     % calculatet eh mean of x,y and z positions
@@ -14,11 +15,15 @@ function [d, p_m, p_std, o_m, o_std] = data_post_process(data_file)
     d_o         = data(4:6,:);
     o_m         = mean(d_o,2);
     o_std       = std(d_o,0,2);
-    data(4:6,:) = data(4:6,:) - o_m;
+    data(4:6,:) = data(4:6,:) - 0*o_m;
     
+    %% plot data
     is_animate = false;
     figure(1)
     plot_data(data, is_animate);
+    xlabel('X axis');
+    ylabel('Y axis');
+    zlabel('Z axis');
     
     %% abstract data
     rng(1); % For reproducibility
@@ -55,18 +60,18 @@ function [d, p_m, p_std, o_m, o_std] = data_post_process(data_file)
     end
 
     
+    %% save data
+    % resample in the abstracted data parameters
+    d.em_data_adj = data;
+    stats         = [p_m, p_std, o_m, o_std];
     
-%     %% save data
-%     % resample in the abstracted data parameters
-%     d.em_data_adj = new_pp_data;
-%     stats         = [p_m, p_std, o_m, o_std];
-%     
-%     % save as a new data structure
-%     name = split(data_file, '.mat');
-%     name = strcat(name{1}, '_new_pp.mat');
-%     em_data_adj = d.em_data_adj;
-%     em_tracker_vel = d.em_tracker_vel;
-%     tool_tip_cal = d.tool_tip_cal;
-%     save(name, 'em_data_adj', 'em_tracker_vel', 'tool_tip_cal','stats')
+    % save as a new data structure
+    name = split(data_file, '.mat');
+    name = strcat(name{1}, '_new_pp.mat');
+    em_data_adj = d.em_data_adj;
+    em_tracker_vel = data_.em_tracker_vel;
+    tool_tip_cal = data_.tool_tip_cal;
+    save(name, 'em_data_adj', 'em_tracker_vel', 'tool_tip_cal','stats')
+    
     
 end
